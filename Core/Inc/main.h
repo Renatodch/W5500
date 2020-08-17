@@ -48,7 +48,7 @@ extern "C" {
 #include "stdlib.h"
 #include "stdint.h"
 #include "stdarg.h"
-
+#include "stdio.h"
 /**** Includes principales *************/
 #include "spi1.h"
 #include "w5500.h"
@@ -93,6 +93,8 @@ extern SPI_HandleTypeDef hspi1;
 #define W_int_GPIO_Port GPIOA
 #define LED_L4_Pin GPIO_PIN_1
 #define LED_L4_GPIO_Port GPIOA
+#define Cs_Pin GPIO_PIN_4
+#define Cs_GPIO_Port GPIOA
 #define Out_02_Pin GPIO_PIN_5
 #define Out_02_GPIO_Port GPIOC
 #define Out_01_Pin GPIO_PIN_0

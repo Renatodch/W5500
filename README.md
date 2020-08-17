@@ -17,7 +17,7 @@ types.h
 ## Ejemplos  
 
 1. Funcion para Inicializar: reset el W5500  
-2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible)  
+2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible [DNS client, DHCP])  
 3. Funcion para servidor web para poder configurar la tarjeta.
 4. Funcion socket para enviar y recibir datos: leer un dato que llega por el socket y grabarlo en memoria, leer desde memoria y enviarlo por el socket.  
 5. Manejo de multiples socket.    

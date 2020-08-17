@@ -10,21 +10,26 @@
 
 void W5500_Reset(void){
 	HAL_Delay(100);
-	HAL_GPIO_WritePin(nRESET_port, nRESET_pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(nPwrDN_GPIO_Port, nPwrDN_Pin, GPIO_PIN_RESET);
 	HAL_Delay(100);
-	HAL_GPIO_WritePin(nRESET_port, nRESET_pin, GPIO_PIN_SET);
-	HAL_Delay(1500);
+	HAL_GPIO_WritePin(nPwrDN_GPIO_Port, nPwrDN_Pin, GPIO_PIN_SET);
+	HAL_Delay(3500);
 }
 
 void W5500_ResetSoftware(void){
 	unsigned char mr;
 	mr = getMR();
+	T("mr: %d",mr);
 	setMR(mr | MR_RST);
 	HAL_Delay(100);
+	mr = getMR();
+		T("mr: %d",mr);
 }
 
 void W5500_Init(void){
+	T("W5500_Reset();");
 	W5500_Reset();
+	T("W5500_ResetSoftware();");
 	W5500_ResetSoftware();
 }
 
@@ -65,51 +70,54 @@ void IINCHIP_WRITE( uint32 addrbsb,  uint8 data)
 	cmd[2] = ((addrbsb & 0x000000F8) + 4);// Data write command and Write data length 1
 	cmd[3] = data;                    // Data write (write 1byte data)
 
-	__ASM volatile ("cpsid f" : : : "memory");
+	//__ASM volatile ("cpsid f" : : : "memory");
 
    cs_low();
    SPI1_Send_IT(cmd, sizeof(cmd));
    cs_high();
 
-   __ASM volatile ("cpsie f" : : : "memory");
+   //__ASM volatile ("cpsie f" : : : "memory");
 
 }
 
 uint8 IINCHIP_READ(uint32 addrbsb)
 {
 	uint8_t cmd[3] = {0};
-	uint8_t buf = 0;
+	uint8_t buf[4] = {0};
 
 	cmd[0] = ((addrbsb & 0x00FF0000)>>16);// Address byte 1
 	cmd[1] = ((addrbsb & 0x0000FF00)>> 8);// Address byte 2
 	cmd[2] = (addrbsb & 0x000000F8);	 	 // Data read command and Read data length 1
 
-	__ASM volatile ("cpsid f" : : : "memory");
+	//__ASM volatile ("cpsid f" : : : "memory");
 	cs_low();
-	SPI1_SendReceive_IT(cmd, &buf, sizeof(cmd) + sizeof(buf));
-	cs_high();
-   __ASM volatile ("cpsie f" : : : "memory");
+	//SPI1_Send_IT(cmd, sizeof(cmd));
+	//SPI1_Receive_IT(&buf, sizeof(buf));
 
-   return buf;
+	SPI1_SendReceive_IT(cmd, buf,  sizeof(buf));
+	cs_high();
+   //__ASM volatile ("cpsie f" : : : "memory");
+
+   return buf[0];
 }
 
 uint16 wiz_write_buf(uint32 addrbsb,uint8* buf,uint16 len)
 {
    uint8_t cmd[3] = {0};
 
-   if(len == 0) debug_uart("ERROR length = 0\r\n");
+   if(len == 0) T("ERROR length = 0\r\n");
 
 
    cmd[0] = ((addrbsb & 0x00FF0000)>>16);// Address byte 1
    cmd[1] = ((addrbsb & 0x0000FF00)>> 8);// Address byte 2
    cmd[2] = ((addrbsb & 0x000000F8) + 4);    // Data write command and Write data length 1
 
-   __ASM volatile ("cpsid f" : : : "memory");
+   //__ASM volatile ("cpsid f" : : : "memory");
    cs_low();
    SPI1_Send_IT(cmd,sizeof(cmd));
    SPI1_Send_IT(buf,len);
    cs_high();
-   __ASM volatile ("cpsie f" : : : "memory");	// Interrupt TcpClient_Trace Routine Enable
+   //__ASM volatile ("cpsie f" : : : "memory");	// Interrupt TcpClient_Trace Routine Enable
 
    return len;
 }
@@ -118,19 +126,21 @@ uint16 wiz_read_buf(uint32 addrbsb, uint8* buf,uint16 len)
 {
   uint8_t cmd[3]={0};
 
-  if(len == 0) debug_uart("ERROR length = 0\r\n");
+  if(len == 0) T("ERROR length = 0\r\n");
 
   cmd[0] = ( (addrbsb & 0x00FF0000)>>16);// Address byte 1
   cmd[1] = ( (addrbsb & 0x0000FF00)>> 8);// Address byte 2
   cmd[3] = ( (addrbsb & 0x000000F8));    // Data write command and Write data length 1
 
-  __ASM volatile ("cpsid f" : : : "memory");
+  //__ASM volatile ("cpsid f" : : : "memory");
   cs_low();
 
-  SPI1_SendReceive_IT(cmd,buf,sizeof(cmd)+len);
+  SPI1_Send_IT(cmd,sizeof(cmd));
+  SPI1_Receive_IT(buf, len);
+  //SPI1_SendReceive_IT(cmd,buf,sizeof(cmd)+len);
 
   cs_high();
-  __ASM volatile ("cpsie f" : : : "memory");	   // Interrupt TcpClient_Trace Routine Enable
+  //__ASM volatile ("cpsie f" : : : "memory");	   // Interrupt TcpClient_Trace Routine Enable
 
   return len;
 }

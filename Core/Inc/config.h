@@ -229,6 +229,9 @@ typedef struct
 	WEB_SERVER__STE State;
 } WebServer;
 
+
+//Web
+
 void WebServer_BuzzerToWriteEeprom(void);
 void WebServer_ListenEventHandler(char * data, int len);
 void WebServer_Events(void);
@@ -236,9 +239,13 @@ void WebServer_ToString(char *str);
 void WebServer_Init(void);
 void WebServer_WriteTable(char *prms);
 
+
 //Pages
 void page1(void);
 void page2(void);
+
+//Debug
+void T(char *format,...);
 /********************************************************************************************************************************************************************************************************/
 /********************************************************************************************************************************************************************************************************/
 

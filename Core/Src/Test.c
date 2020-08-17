@@ -53,6 +53,7 @@ uint8 rxsize[MAX_SOCK_NUM] = {4,4,4,4,4,4,4,4};//{2,2,2,2,2,2,2,2};
 *******************************************************************************/
 void Net_Init(void)
 {
+	uint8_t tmp_array[8]={0};
     uint8 i;
 
     W5500_Init();  //rdch
@@ -86,22 +87,24 @@ void Net_Init(void)
     //Init. TX & RX Memory size
     sysinit(txsize, rxsize);
 
-//    T("\r\n----------------------------------------- \r\n");
-//    T("W5500E01-M3                       \r\n");
-//    T("Network Configuration Information \r\n");
-//    T("----------------------------------------- ");
+    T("\r\n----------------------------------------- \r\n");
+    T("W5500E01-M3                       \r\n");
+    T("Network Configuration Information \r\n");
+    T("----------------------------------------- ");
 
-//    getSHAR(tmp_array);
-//    T("\r\nMAC : %.2X.%.2X.%.2X.%.2X.%.2X.%.2X", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3],tmp_array[4],tmp_array[5]);
+    getSHAR(tmp_array);
+    T("\r\nMAC : %.2X.%.2X.%.2X.%.2X.%.2X.%.2X", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3],tmp_array[4],tmp_array[5]);
 
-//    getSIPR (tmp_array);
-//    T("\r\nIP : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
+    memset(tmp_array,0x00,sizeof(tmp_array));
+    getSIPR (tmp_array);
+    T("\r\nIP : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
 
-//    getSUBR(tmp_array);
-//    T("\r\nSN : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
+    memset(tmp_array,0x00,sizeof(tmp_array));
+    getSUBR(tmp_array);
+    T("\r\nSN : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
 
-//    getGAR(tmp_array);
-//    T("\r\nGW : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
+    getGAR(tmp_array);
+    T("\r\nGW : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
 }
 
 
@@ -159,16 +162,18 @@ void Net_ArrayToIpStr(char *ipStr, uint8_t *array)
 
 
 // NO HAL REQUIRED
-void debug_uart(char * format,...){
+void T(char * format,...){
 	char msg[64] = {0};
 	char *p = msg;
 	va_list args;
 	va_start(args,format);
 
 	vsnprintf(msg, sizeof(msg), format, args);
-
+	strcat(msg,"\r\n");
 	while(*p){
-		USART1->DR = (uint16_t)*p++;
+
+		USART1->DR = (uint32_t)*(p++);
+		while(!(USART1->SR & USART_SR_TC));
 	}
 	va_end(args);
 }
