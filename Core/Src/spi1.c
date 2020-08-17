@@ -56,7 +56,7 @@ void SPI1_SendReceive_IT(uint8_t * pTx,uint8_t * pRx, uint16_t size){
 *******************************************************************************/
 void SPI1_Send_IT(uint8_t *pTx, uint16_t size){
 	while(hspi1.State != HAL_SPI_STATE_READY);
-	HAL_SPI_Transmit_IT(&hspi1, Tx, size);
+	HAL_SPI_Transmit_IT(&hspi1, pTx, size);
 	while(hspi1.State != HAL_SPI_STATE_READY);
 }
 

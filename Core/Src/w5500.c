@@ -82,23 +82,23 @@ void IINCHIP_WRITE( uint32 addrbsb,  uint8 data)
 
 uint8 IINCHIP_READ(uint32 addrbsb)
 {
-	uint8_t cmd[3] = {0};
-	uint8_t buf[4] = {0};
+	uint8_t cmd[4] = {0};
+	uint8_t buf = 0;
 
 	cmd[0] = ((addrbsb & 0x00FF0000)>>16);// Address byte 1
 	cmd[1] = ((addrbsb & 0x0000FF00)>> 8);// Address byte 2
 	cmd[2] = (addrbsb & 0x000000F8);	 	 // Data read command and Read data length 1
-
+	//cmd[3] = 0x00;
 	//__ASM volatile ("cpsid f" : : : "memory");
 	cs_low();
-	//SPI1_Send_IT(cmd, sizeof(cmd));
-	//SPI1_Receive_IT(&buf, sizeof(buf));
+	SPI1_Send_IT(cmd, sizeof(cmd));
+	SPI1_Receive_IT(&buf, sizeof(buf));
 
-	SPI1_SendReceive_IT(cmd, buf,  sizeof(buf));
+	//SPI1_SendReceive_IT(cmd, buf,  sizeof(buf));
 	cs_high();
    //__ASM volatile ("cpsie f" : : : "memory");
 
-   return buf[0];
+   return buf;
 }
 
 uint16 wiz_write_buf(uint32 addrbsb,uint8* buf,uint16 len)
