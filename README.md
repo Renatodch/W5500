@@ -32,7 +32,7 @@ types.h
 -Funciones interface con spi1  
 -Funciones interface con socket  
 
-Comentarios:
+Comentarios:  
 -ahora: void W5500_Init(); antes void Net_Init(void)  
 -chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK  
 
