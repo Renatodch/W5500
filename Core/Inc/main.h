@@ -59,6 +59,7 @@ extern "C" {
 #include "eeprom.h"
 #include "Types.h"
 #include "Timer.h"
+#include "Uint32.h"
 #include "Test.h"
 /*****************************************/
 

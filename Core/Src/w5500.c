@@ -121,7 +121,7 @@ void W5500_Init(void)
 	uint8_t tmp_array[8]={0};
     uint8 i;
 
-    W5500_Init();
+    //W5500_Init();
 
     T("W5500_Reset();");
 	W5500_Reset();

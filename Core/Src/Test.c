@@ -94,9 +94,28 @@ void Net_ArrayToIpStr(char *ipStr, uint8_t *array)
 uint8 ch_status[MAX_SOCK_NUM] = { 0, }; /** 0:close, 1:ready, 2:connected */
 uint8 TX_BUF[TX_RX_MAX_BUF_SIZE]; // TX Buffer for applications
 
-void Client_Receiver_EventHandler(uint8_t *data, int len){
-	char str[64] = {0};
 
+uint8 TcpClientConn_SendStream(TcpClient *p, uint8 * data_buf, 	uint16 len)
+{
+
+	uint8_t buf[1024] = { 0 };
+
+	Uint32_ToBytes(len, buf);
+
+	memcpy(&buf[4], data_buf, len);
+
+	if (getSn_SR(p->socket) == SOCK_ESTABLISHED)
+	{
+			send(p->socket, (uint8*) buf, len + 4, (bool)0);
+			return 1;
+	}
+
+	return 0;
+}
+
+void Client_Receiver_EventHandler(uint8_t *data, int len){
+
+	TcpClientConn_SendStream(&devtcc, data, len);
 	T("Recibi: %s, len:%d",(char *)data,len);
 }
 void Client_onConnection_EventHandler(void){
