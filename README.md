@@ -16,6 +16,9 @@ types.h
 
 ## Ejemplos  
 
+Ejemplo con multiples sockets:
+-1er socket TCP_Client: Transmit & Reciving
+
 ## Requerimientos  
 1. Funcion para Inicializar: reset el W5500  
 2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible [DNS client, DHCP])  
