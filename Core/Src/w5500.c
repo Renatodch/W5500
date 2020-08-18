@@ -8,58 +8,6 @@
 
 #include "main.h"
 
-void W5500_Reset(void){
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(nPwrDN_GPIO_Port, nPwrDN_Pin, GPIO_PIN_RESET);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(nPwrDN_GPIO_Port, nPwrDN_Pin, GPIO_PIN_SET);
-	HAL_Delay(3500);
-}
-
-void W5500_ResetSoftware(void){
-	unsigned char mr;
-	mr = getMR();
-	T("mr: %d",mr);
-	setMR(mr | MR_RST);
-	HAL_Delay(100);
-	mr = getMR();
-		T("mr: %d",mr);
-}
-
-void W5500_Init(void){
-	T("W5500_Reset();");
-	W5500_Reset();
-	T("W5500_ResetSoftware();");
-	W5500_ResetSoftware();
-}
-
-
-#ifdef __DEF_IINCHIP_PPP__
-   #include "md5.h"
-#endif
-
-static uint8 I_STATUS[MAX_SOCK_NUM];
-static uint16 SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
-static uint16 RSIZE[MAX_SOCK_NUM]; /**< Max Rx buffer size by each channel */
-
-uint8 getISR(uint8 s)
-{
-  return I_STATUS[s];
-}
-void putISR(uint8 s, uint8 val)
-{
-   I_STATUS[s] = val;
-}
-
-uint16 getIINCHIP_RxMAX(uint8 s)
-{
-   return RSIZE[s];
-}
-uint16 getIINCHIP_TxMAX(uint8 s)
-{
-   return SSIZE[s];
-}
-
 
 void IINCHIP_WRITE( uint32 addrbsb,  uint8 data)
 {
@@ -82,7 +30,7 @@ void IINCHIP_WRITE( uint32 addrbsb,  uint8 data)
 
 uint8 IINCHIP_READ(uint32 addrbsb)
 {
-	uint8_t cmd[4] = {0};
+	uint8_t cmd[3] = {0};
 	uint8_t buf = 0;
 
 	cmd[0] = ((addrbsb & 0x00FF0000)>>16);// Address byte 1
@@ -130,7 +78,7 @@ uint16 wiz_read_buf(uint32 addrbsb, uint8* buf,uint16 len)
 
   cmd[0] = ( (addrbsb & 0x00FF0000)>>16);// Address byte 1
   cmd[1] = ( (addrbsb & 0x0000FF00)>> 8);// Address byte 2
-  cmd[3] = ( (addrbsb & 0x000000F8));    // Data write command and Write data length 1
+  cmd[2] = ( (addrbsb & 0x000000F8));    // Data write command and Write data length 1
 
   //__ASM volatile ("cpsid f" : : : "memory");
   cs_low();
@@ -144,6 +92,122 @@ uint16 wiz_read_buf(uint32 addrbsb, uint8* buf,uint16 len)
 
   return len;
 }
+/*###############################################################################################################*/
+
+
+
+
+
+void W5500_Reset(void){
+	HAL_Delay(100);
+	HAL_GPIO_WritePin(nPwrDN_GPIO_Port, nPwrDN_Pin, GPIO_PIN_RESET);
+	HAL_Delay(100);
+	HAL_GPIO_WritePin(nPwrDN_GPIO_Port, nPwrDN_Pin, GPIO_PIN_SET);
+	HAL_Delay(3500);
+}
+
+void W5500_ResetSoftware(void){
+	unsigned char mr;
+	mr = getMR();
+	//T("mr: %d",mr);
+	setMR(mr | MR_RST);
+	HAL_Delay(100);
+	//mr = getMR();
+	//T("mr: %d",mr);
+}
+
+void W5500_Init(void)
+{
+	uint8_t tmp_array[8]={0};
+    uint8 i;
+
+    W5500_Init();
+
+    T("W5500_Reset();");
+	W5500_Reset();
+	T("W5500_ResetSoftware();");
+	W5500_ResetSoftware();
+
+    // MAC ADDRESS
+    for (i = 0 ; i < 6; i++) Config_Msg.Mac[i] = MAC[i];
+    // Local IpDevice ADDRESS
+    for (i = 0 ; i < 4; i++) Config_Msg.IpDevice[i] = IpDevice[i];
+    // GateWay ADDRESS
+    for (i = 0 ; i < 4; i++) Config_Msg.Gw[i] = GateWay[i];
+    // Subnet Mask ADDRESS
+    for (i = 0 ; i < 4; i++) Config_Msg.Sub[i] = SubNet[i];
+
+    //set mac
+    setSHAR(Config_Msg.Mac);
+    //set subnet mask
+    setSUBR(Config_Msg.Sub);
+    //set gateway
+    setGAR(Config_Msg.Gw);
+    //set ip
+    setSIPR(Config_Msg.IpDevice);
+
+    //set DHCP
+    Config_Msg.DHCP = Enable_DHCP;
+
+    //Destination Ip address for TCP Client
+    for (i = 0 ; i < 4; i++) Chconfig_Type_Def.destip[i] = IpServer[i];
+    Chconfig_Type_Def.port = PortServer;
+
+    //set retry time-value: retransmission timeout = 200 ms
+    setRTR(2000);
+    //set retry count: 5
+    setRCR(5);
+
+    //Inicializa tamaño memoria Tx & Rx
+    sysinit(txsize, rxsize);
+
+    T("\r\n----------------------------------------- \r\n");
+    T("W5500E01-M3                       \r\n");
+    T("Network Configuration Information \r\n");
+    T("----------------------------------------- ");
+
+    getSHAR(tmp_array);
+    T("\r\nMAC : %.2X.%.2X.%.2X.%.2X.%.2X.%.2X", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3],tmp_array[4],tmp_array[5]);
+
+    memset(tmp_array,0x00,sizeof(tmp_array));
+    getSIPR (tmp_array);
+    T("\r\nIP : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
+
+    memset(tmp_array,0x00,sizeof(tmp_array));
+    getSUBR(tmp_array);
+    T("\r\nSN : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
+
+    getGAR(tmp_array);
+    T("\r\nGW : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
+}
+
+
+#ifdef __DEF_IINCHIP_PPP__
+   #include "md5.h"
+#endif
+
+static uint8 I_STATUS[MAX_SOCK_NUM];
+static uint16 SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
+static uint16 RSIZE[MAX_SOCK_NUM]; /**< Max Rx buffer size by each channel */
+
+uint8 getISR(uint8 s)
+{
+  return I_STATUS[s];
+}
+void putISR(uint8 s, uint8 val)
+{
+   I_STATUS[s] = val;
+}
+
+uint16 getIINCHIP_RxMAX(uint8 s)
+{
+   return RSIZE[s];
+}
+uint16 getIINCHIP_TxMAX(uint8 s)
+{
+   return SSIZE[s];
+}
+
 
 
 /**
@@ -256,16 +320,12 @@ void sysinit( uint8 * tx_size, uint8 * rx_size  )
 }
 
 
-/*********************************** SETTERS ***************************************/
+/*###################################### SETTERS ############################################*/
 
 //set gateway addr
 void setGAR(uint8 * addr ) /**< a pointer to a 4 -byte array responsible to set the Gateway IP address. */
 {
     wiz_write_buf(GAR0, addr, 4);
-}
-void getGWIP(uint8 * addr)
-{
-    wiz_read_buf(GAR0, addr, 4);
 }
 
 //set subnet mask
@@ -286,6 +346,7 @@ void setSIPR(uint8 * addr)  /**< a pointer to a 4 -byte array responsible to set
 {
     wiz_write_buf(SIPR0, addr, 4);
 }
+
 //set mode
 void setMR(uint8 val)
 {
@@ -298,13 +359,11 @@ void getGAR(uint8 * addr)
 {
     wiz_read_buf(GAR0, addr, 4);
 }
-
 //get subnet mask
 void getSUBR(uint8 * addr)
 {
     wiz_read_buf(SUBR0, addr, 4);
 }
-
 //get mac addr
 void getSHAR(uint8 * addr)
 {
@@ -316,17 +375,12 @@ void getSIPR(uint8 * addr)
 {
     wiz_read_buf(SIPR0, addr, 4);
 }
-
 //get mode
 uint8 getMR( void )
 {
    return IINCHIP_READ(MR);
 }
-
-/***********************************************************************************/
-/**
-@brief  This function gets Interrupt register in common register.
- */
+//gets Interrupt register in common register.
 uint8 getIR( void )
 {
    return IINCHIP_READ(IR);
@@ -348,7 +402,7 @@ void setRTR(uint16 timeout)
 @brief  This function set the number of Retransmission.
 
 If there is no response from the peer or delay in response then recorded time
-as per RTR & RCR register seeting then time out will occur.
+as per RTR & RCR register setting then time out will occur.
 */
 void setRCR(uint8 retry)
 {
@@ -382,20 +436,13 @@ void setSn_TTL(SOCKET s, uint8 ttl)
 
 
 
-/**
-@brief  get socket interrupt status
-
-These below functions are used to read the Interrupt & Soket Status register
-*/
+//socket interrupt status
 uint8 getSn_IR(SOCKET s)
 {
    return IINCHIP_READ(Sn_IR(s));
 }
 
-
-/**
-@brief   get socket status
-*/
+//socket status
 uint8 getSn_SR(SOCKET s)
 {
    return IINCHIP_READ(Sn_SR(s));

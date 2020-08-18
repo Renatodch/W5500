@@ -5,24 +5,12 @@
  *      Author: Renato
  */
 
-#ifndef INC_CONFIG_H_
-#define INC_CONFIG_H_
+#ifndef INC_TEST_H_
+#define INC_TEST_H_
 
 #include "main.h"
 //=================================================
 
-
-//////////////////////////////////////////////////////////////////////////////////////
-/******************** PIN PWDN ************************************/								//
-#define PWDN_pin	GPIO_PIN_14																												//
-#define PWDN_port	GPIOA																															//
-/******************* PIN nRESET ***********************************/								//
-#define nRESET_pin	GPIO_PIN_15																											//
-#define nRESET_port	GPIOA																														//
-/******************** PIN nINT ************************************/								//
-#define nINT_pin	GPIO_PIN_8																												//
-#define nINT_port	GPIOA																															//
-//////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -134,9 +122,7 @@ extern uint8 TX_BUF[TX_RX_MAX_BUF_SIZE];
 #define EEPROM_EPOCH_TIME_TABLA				3400					//Fecha de tabla uploaded /*NO Str*/
 
 
-typedef void (*Receiver_EventHandler)(uint8_t *data, int len);
 
-void Net_Init(void);
 
 
 /***************************************************************************************************/
@@ -156,18 +142,25 @@ void Net_Init(void);
 #define		SOCKET_ROTEM_NET 				SOCKET_2TCP
 #define		SOCKET_TRACE					SOCKET_5TCP
 
+//Tal para cual
+typedef void (*Receiver_EventHandler)(uint8_t *data, int len);
 typedef void (*OnConnection_EventHandler)(void);
 
 
+extern void Client_Receiver_EventHandler(uint8_t *data, int len);
+extern void Client_onConnection_EventHandler(void);
+
 typedef struct
 {
-		Timer					request_Timer;
-		uint8_t	 			dest_Ip[4];
+		Timer			request_Timer;
+		uint8_t	 		dest_Ip[4];
 		uint16_t  		dest_Port;
-		uint8_t				socket;
+		uint8_t			socket;
 		Receiver_EventHandler		receiver_EventHandler;
 		OnConnection_EventHandler	onConnection_EventHandler;
 }TcpClient;
+
+
 
 uint8_t 		TcpClientConn_Get_State(TcpClient *p);
 void 			TcpClientConn_Send_String(TcpClient *p, char * data_buf);
@@ -193,7 +186,7 @@ typedef struct
 void ServerConn_SendLine(ServerConnection *p, const char * str);
 void ServerConn_SendString(ServerConnection *p, const char * data_buf);
 void ServerConn_Events(ServerConnection *p);
-void 	ServerConnection_ToString(ServerConnection *p, char *mt);
+void ServerConnection_ToString(ServerConnection *p, char *mt);
 void ServerConnection_Init(ServerConnection *p, char socket, uint16_t port, Listen_EventHandler listen_EventHandler);
 
 
@@ -230,7 +223,7 @@ typedef struct
 } WebServer;
 
 
-//Web
+
 
 void WebServer_BuzzerToWriteEeprom(void);
 void WebServer_ListenEventHandler(char * data, int len);
@@ -244,10 +237,38 @@ void WebServer_WriteTable(char *prms);
 void page1(void);
 void page2(void);
 
+
+/********************************************************************************************************************************************************************************************************/
+/********************************************************************************************************************************************************************************************************/
 //Debug
 void T(char *format,...);
-/********************************************************************************************************************************************************************************************************/
-/********************************************************************************************************************************************************************************************************/
+
+extern uint8 Enable_DHCP;
+
+extern uint8 IpServer[4];
+extern uint16 PortServer;
+extern uint8 MAC[6];
+
+extern uint8 IpDevice[4];//IpDevice Address
+extern uint8 GateWay[4];//Gateway Address
+extern uint8 SubNet[4];//SubnetMask Address
+
+extern uint8 IpTrace[4];//IpTrace Address
+extern uint16 PortTrace;
+
+extern uint16 any_port;
+
+extern CONFIG_MSG Config_Msg;
+extern CHCONFIG_TYPE_DEF Chconfig_Type_Def;
+
+extern uint16 PortServer;
+extern uint8 IpServer[4] ;
+
+//TX MEM SIZE- SOCKET 0-7:4KB
+//RX MEM SIZE- SOCKET 0-7:4KB
+extern uint8 txsize[MAX_SOCK_NUM];
+extern uint8 rxsize[MAX_SOCK_NUM];
+/* Extern variables ----------------------------------------------------------*/
 
 
-#endif /* INC_CONFIG_H_ */
+#endif /* INC_TEST_H_ */

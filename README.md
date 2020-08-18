@@ -16,6 +16,7 @@ types.h
 
 ## Ejemplos  
 
+## Requerimientos
 1. Funcion para Inicializar: reset el W5500  
 2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible [DNS client, DHCP])  
 3. Funcion para servidor web para poder configurar la tarjeta.
@@ -26,7 +27,14 @@ types.h
   
 ## Metodos
 
-### w5500  
+### w5500 (Descripción en W5500.h)
+-Funciones generales del chip
+-Funciones interface con spi1
+-Funciones interface con socket
+
+Comentarios:
+-ahora: void W5500_Init(); antes void Net_Init(void)
+-chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK
 
 ### socket 
 

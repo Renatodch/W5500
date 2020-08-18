@@ -22,5 +22,6 @@ extern uint16 recv(SOCKET s, uint8 * buf, uint16 len);	// Receive data (TCP)
 extern uint16 sendto(SOCKET s, const uint8 * buf, uint16 len, uint8 * addr, uint16 port); // Send data (UDP/IP RAW)
 extern uint16 recvfrom(SOCKET s, uint8 * buf, uint16 len, uint8 * addr, uint16  *port); // Receive data (UDP/IP RAW)
 int8 Socket_GetStatusToString(uint8 socket, char *mt);
+void Socket_Trace(char* tag, uint8_t s);
 
 #endif /* INC_SOCKET_H_ */

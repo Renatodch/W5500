@@ -50,9 +50,13 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
-char msj[100];
+char w5500Buf[64];
+uint32_t eepromBuf[100];
 Timer Led;
-
+Timer net;
+TcpClient	devtcc;
+ServerConnection websc;
+WebServer webServer;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,8 +89,8 @@ static void grabarDato()
 static void leerDato()
 {
 
-	EE_Reads(0,4,(uint32_t *)msj);
-
+	EE_Reads(0,4,(uint32_t *)eepromBuf);
+	for(int i = 0; i<4; i++) T("Dato Leido: %d",eepromBuf[i]);
 }
 /* USER CODE END 0 */
 
@@ -135,16 +139,24 @@ int main(void)
 
   T("Iniciando...");
 
-  Timer_Init(&Led, 1000);
+  Timer_Init(&Led, 2000);
   Timer_Start(&Led);
-  HAL_GPIO_WritePin(GPIOB, Buzzer_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, Buzzer_Pin, GPIO_PIN_SET); //Apagar buzzer ?
 
-  /*Inicia W5500 y caracteristicas de la red*/
-  Net_Init();
+  /*1. Inicia W5500 y caracteristicas de la red*/
 
-  //TcpClientConn_Init(&devtcc, 1, IpServer, PortServer, Plc_TcpClientConn_OnReceiver_EventHandler, Plc_TcpClientConn_OnConnection_EventHandler );
 
-  //ServerConnection_Init(&websc, 2, 80, (Listen_EventHandler) WebServer_ListenEventHandler);
+  W5500_Init();
+  Timer_Init(&net, 3000);
+
+  TcpClientConn_Init(&devtcc, SOCKET_1TCP, IpServer, PortServer, Client_Receiver_EventHandler, Client_onConnection_EventHandler);
+
+  ServerConnection_Init(&websc, SOCKET_2TCP, 80, WebServer_ListenEventHandler);
+
+  Socket_Trace("Client 1er",devtcc.socket);
+
+  Socket_Trace("Server 2do",websc.socket);
+
 
   //WebServer_Init();
   //grabarDato();
@@ -158,18 +170,24 @@ int main(void)
   {
 	  //Pulso de vida
 	  if(Timer_Elapsed(&Led)){
+		  Socket_Trace("Client 1er",devtcc.socket);
+		  Socket_Trace("Server 2do",websc.socket);
 
 		  LED_PLC_GPIO_Port->ODR ^=LED_PLC_Pin;
 		  LED_CPU_GPIO_Port->ODR ^=LED_CPU_Pin;
 		  Timer_Start(&Led);
 	  }
+	  if(Timer_Elapsed(&net)){
+		  //Net_Init();
+	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
 	  //ServerConn_Events(&websc);
 
-	  //TcpClientConn_Events(&devtcc, 50001);
+	  TcpClientConn_Events(&devtcc, 50001);
 
 	  //WebServer_Events();
 

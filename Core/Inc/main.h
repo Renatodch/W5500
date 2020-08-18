@@ -56,11 +56,10 @@ extern "C" {
 /******************************************/
 
 /********Includes de Referencia*************/
-
 #include "eeprom.h"
 #include "Types.h"
 #include "Timer.h"
-#include "config.h"
+#include "Test.h"
 /*****************************************/
 
 /* USER CODE END Includes */
@@ -85,7 +84,11 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 extern SPI_HandleTypeDef hspi1;
+extern IWDG_HandleTypeDef hiwdg;
 
+extern TcpClient	devtcc;
+extern ServerConnection websc;
+extern WebServer webServer;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

@@ -344,45 +344,55 @@
 #define IPPROTO_ND                   77       /**< UNOFFICIAL net disk protocol */
 #define IPPROTO_RAW                  255      /**< Raw IP packet */
 
-/*********************************************************
-* iinchip access function
-*********************************************************/
+/*############################# INTERFACE CON SPI #############################################################*/
 void IINCHIP_WRITE( uint32 addrbsb,  uint8 data);
 uint8 IINCHIP_READ(uint32 addrbsb);
 uint16 wiz_write_buf(uint32 addrbsb,uint8* buf,uint16 len);
 uint16 wiz_read_buf(uint32 addrbsb, uint8* buf,uint16 len);
 
+/*############################# FUNCIONES INTERFACE CON SOCKET ###################################################*/
+void send_data_processing(SOCKET s, uint8 *wizdata, uint16 len);
+void recv_data_processing(SOCKET s, uint8 *wizdata, uint16 len);
 
-void iinchip_init(void); // reset iinchip
-void sysinit(uint8 * tx_size, uint8 * rx_size); // setting tx/rx buf size
-uint8 getISR(uint8 s);
-void putISR(uint8 s, uint8 val);
-uint16 getIINCHIP_RxMAX(uint8 s);
-uint16 getIINCHIP_TxMAX(uint8 s);
-void setMR(uint8 val);
-uint8 getMR( void );
-void setRTR(uint16 timeout); // set retry duration for data transmission, connection, closing ...
-void setRCR(uint8 retry); // set retry count (above the value, assert timeout interrupt)
-void clearIR(uint8 mask); // clear interrupt
-uint8 getIR( void );
+/*Setters*/
+void setSn_TTL(SOCKET s, uint8 ttl);
 void setSn_MSS(SOCKET s, uint16 Sn_MSSR); // set maximum segment size
+
+/*Getters*/
 uint8 getSn_IR(SOCKET s); // get socket interrupt status
 uint8 getSn_SR(SOCKET s); // get socket status
 uint16 getSn_TX_FSR(SOCKET s); // get socket TX free buf size
 uint16 getSn_RX_RSR(SOCKET s); // get socket RX recv buf size
 uint8 getSn_SR(SOCKET s);
-void setSn_TTL(SOCKET s, uint8 ttl);
-void send_data_processing(SOCKET s, uint8 *wizdata, uint16 len);
-void recv_data_processing(SOCKET s, uint8 *wizdata, uint16 len);
 
-void setGAR(uint8 * addr); // set gateway address
-void setSUBR(uint8 * addr); // set subnet mask address
-void setSHAR(uint8 * addr); // set local MAC address
-void setSIPR(uint8 * addr); // set local IP address
+/*######################### FUNCIONES GENERALES DEL CHIP#####################################################*/
+void iinchip_init(void); // reset iinchip
+void sysinit(uint8 * tx_size, uint8 * rx_size); // setting tx/rx buf size
+void W5500_Init(void);
+void W5500_Reset(void);
+void W5500_ResetSoftware(void);
+
+void clearIR(uint8 mask); // clear interrupt
+void putISR(uint8 s, uint8 val);
+/*Setters*/
+void setGAR(uint8 * addr); //gateway address
+void setSUBR(uint8 * addr); //subnet mask address
+void setSHAR(uint8 * addr); //local MAC address
+void setSIPR(uint8 * addr); //local IP address
+void setMR(uint8 val);
+void setRTR(uint16 timeout); // set retry duration for data transmission, connection, closing ...
+void setRCR(uint8 retry); // set retry count (above the value, assert timeout interrupt)
+
+/*Getters*/
+uint8 getISR(uint8 s);
+uint8 getIR( void );
 void getGAR(uint8 * addr);
 void getSUBR(uint8 * addr);
 void getSHAR(uint8 * addr);
 void getSIPR(uint8 * addr);
+uint8 getMR( void );
+uint16 getIINCHIP_RxMAX(uint8 s);
+uint16 getIINCHIP_TxMAX(uint8 s);
 
 /**
  @brief WIZCHIP_OFFSET_INC on IINCHIP_READ/WRITE
@@ -395,8 +405,5 @@ void getSIPR(uint8 * addr);
  */
 //#define WIZCHIP_OFFSET_INC(ADDR, N)    (ADDR + (N<<8)) //< Increase offset address
 
-void W5500_Init();
-void W5500_Reset(void);
-void W5500_ResetSoftware(void);
 
 #endif /* INC_W5500_H_ */

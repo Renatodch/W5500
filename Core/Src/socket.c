@@ -12,7 +12,13 @@
 static uint16 local_port;
 extern uint16 sent_ptr;
 
-
+void Socket_Trace(char* tag, uint8_t s)
+{
+	char str[32] = {0};
+	Socket_GetStatusToString(s, str);
+	uint8_t val = getSn_SR(s);
+	T("%s socket: %s (%d)",tag,str,val);
+}
 int8 Socket_GetStatusToString(uint8 socket, char *mt)
 {
 	uint8_t ret = 0;
@@ -30,7 +36,7 @@ int8 Socket_GetStatusToString(uint8 socket, char *mt)
 
 	case SOCK_INIT:								/**< init State */
 		//ret = STATUS_INIT;
-		strcat(mt, "Ini. Desconectado");
+		strcat(mt, "Init & Desconectado");
 		break;
 
 	case SOCK_LISTEN:							/**< listen State */
@@ -103,7 +109,12 @@ uint8 socket(SOCKET s, uint8 protocol, uint16 port, uint8 flag)
       )
    {
       close(s);
-      IINCHIP_WRITE(Sn_MR(s) ,protocol | flag);
+      while(!(IINCHIP_READ(Sn_MR(s)) & (protocol|flag) ))
+      {
+		  IINCHIP_WRITE(Sn_MR(s) ,protocol | flag);
+		  HAL_IWDG_Refresh(&hiwdg);
+      }
+
       if (port != 0) {
          IINCHIP_WRITE( Sn_PORT0(s) ,(uint8)((port & 0xff00) >> 8));
          IINCHIP_WRITE( Sn_PORT1(s) ,(uint8)(port & 0x00ff));
@@ -112,12 +123,19 @@ uint8 socket(SOCKET s, uint8 protocol, uint16 port, uint8 flag)
          IINCHIP_WRITE(Sn_PORT0(s) ,(uint8)((local_port & 0xff00) >> 8));
          IINCHIP_WRITE(Sn_PORT1(s) ,(uint8)(local_port & 0x00ff));
       }
-      IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_OPEN); // run sockinit Sn_CR
 
-      /* wait to process the command... */
-      while( IINCHIP_READ(Sn_CR(s)) )
-         ;
-      /* ------- */
+      //while(getSn_SR(s)!=SOCK_INIT){
+		  IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_OPEN); // run sockinit Sn_CR
+		  //T("Opening socket...");
+		  /* wait to process the command... */
+		  while( IINCHIP_READ(Sn_CR(s)) );
+		  /* ------- */
+		  //while(!(getSn_IR(s) & Sn_IR_SEND_OK))
+		//	  HAL_IWDG_Refresh(&hiwdg);
+		 // IINCHIP_WRITE(Sn_IR(s) , Sn_IR_SEND_OK);
+		  //HAL_IWDG_Refresh(&hiwdg);
+		  //T("Again...");
+      //}
       ret = 1;
    }
    else
