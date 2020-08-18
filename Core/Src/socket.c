@@ -9,8 +9,8 @@
 #include "main.h"
 
 
-static uint16 local_port;
-extern uint16 sent_ptr;
+static uint16_t local_port;
+extern uint16_t sent_ptr;
 
 void Socket_Trace(char* tag, uint8_t s)
 {
@@ -19,7 +19,7 @@ void Socket_Trace(char* tag, uint8_t s)
 	uint8_t val = getSn_SR(s);
 	T("%s socket: %s (%d)",tag,str,val);
 }
-int8 Socket_GetStatusToString(uint8 socket, char *mt)
+char Socket_GetStatusToString(uint8_t socket, char *mt)
 {
 	uint8_t ret = 0;
 	char str[64] ={0};
@@ -30,7 +30,7 @@ int8 Socket_GetStatusToString(uint8 socket, char *mt)
 	switch (getSn_SR(socket))
 	{
 	case SOCK_CLOSED:							/**< closed */
-		//ret = (uint8_t)STATUS_CLOSED;
+		//ret = (uint8_t_t)STATUS_CLOSED;
 		strcat(mt, "Cerrado");
 		break;
 
@@ -97,9 +97,9 @@ int8 Socket_GetStatusToString(uint8 socket, char *mt)
 @brief   This Socket function initialize the channel in perticular mode, and set the port and wait for W5200 done it.
 @return  1 for sucess else 0.
 */
-uint8 socket(SOCKET s, uint8 protocol, uint16 port, uint8 flag)
+uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag)
 {
-   uint8 ret;
+   uint8_t ret;
    if (
         ((protocol&0x0F) == Sn_MR_TCP)    ||
         ((protocol&0x0F) == Sn_MR_UDP)    ||
@@ -116,12 +116,12 @@ uint8 socket(SOCKET s, uint8 protocol, uint16 port, uint8 flag)
       }
 
       if (port != 0) {
-         IINCHIP_WRITE( Sn_PORT0(s) ,(uint8)((port & 0xff00) >> 8));
-         IINCHIP_WRITE( Sn_PORT1(s) ,(uint8)(port & 0x00ff));
+         IINCHIP_WRITE( Sn_PORT0(s) ,(uint8_t)((port & 0xff00) >> 8));
+         IINCHIP_WRITE( Sn_PORT1(s) ,(uint8_t)(port & 0x00ff));
       } else {
          local_port++; // if don't set the source port, set local_port number.
-         IINCHIP_WRITE(Sn_PORT0(s) ,(uint8)((local_port & 0xff00) >> 8));
-         IINCHIP_WRITE(Sn_PORT1(s) ,(uint8)(local_port & 0x00ff));
+         IINCHIP_WRITE(Sn_PORT0(s) ,(uint8_t)((local_port & 0xff00) >> 8));
+         IINCHIP_WRITE(Sn_PORT1(s) ,(uint8_t)(local_port & 0x00ff));
       }
 
       //while(getSn_SR(s)!=SOCK_INIT){
@@ -167,9 +167,9 @@ void close(SOCKET s)
 @brief   This function established  the connection for the channel in passive (server) mode. This function waits for the request from the peer.
 @return  1 for success else 0.
 */
-uint8 listen(SOCKET s)
+uint8_t listen(SOCKET s)
 {
-   uint8 ret;
+   uint8_t ret;
    if (IINCHIP_READ( Sn_SR(s) ) == SOCK_INIT)
    {
       IINCHIP_WRITE( Sn_CR(s) , Sn_CR_LISTEN);
@@ -192,9 +192,9 @@ uint8 listen(SOCKET s)
 
 @return  1 for success else 0.
 */
-uint8 connect(SOCKET s, uint8 * addr, uint16 port)
+uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port)
 {
-    uint8 ret;
+    uint8_t ret;
     if
         (
             ((addr[0] == 0xFF) && (addr[1] == 0xFF) && (addr[2] == 0xFF) && (addr[3] == 0xFF)) ||
@@ -212,8 +212,8 @@ uint8 connect(SOCKET s, uint8 * addr, uint16 port)
 						IINCHIP_WRITE( Sn_DIPR1(s), addr[1]);
 						IINCHIP_WRITE( Sn_DIPR2(s), addr[2]);
 						IINCHIP_WRITE( Sn_DIPR3(s), addr[3]);
-						IINCHIP_WRITE( Sn_DPORT0(s), (uint8)((port & 0xff00) >> 8));
-						IINCHIP_WRITE( Sn_DPORT1(s), (uint8)(port & 0x00ff));
+						IINCHIP_WRITE( Sn_DPORT0(s), (uint8_t)((port & 0xff00) >> 8));
+						IINCHIP_WRITE( Sn_DPORT1(s), (uint8_t)(port & 0x00ff));
 						IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_CONNECT);
 						/* wait for completion */
 						while ( IINCHIP_READ(Sn_CR(s) ) ) ;
@@ -259,11 +259,11 @@ void disconnect(SOCKET s)
 @brief   This function used to send the data in TCP mode
 @return  1 for success else 0.
 */
-uint16 send(SOCKET s, const uint8 * buf, uint16 len, bool retry)
+uint16_t send(SOCKET s, const uint8_t* buf, uint16_t len, bool retry)
 {
-  uint8 status=0;
-  uint16 ret=0;
-  uint16 freesize=0;
+  uint8_t status=0;
+  uint16_t ret=0;
+  uint16_t freesize=0;
 
   if (len > getIINCHIP_TxMAX(s)) ret = getIINCHIP_TxMAX(s); // check size not to exceed MAX size.
   else ret = len;
@@ -282,7 +282,7 @@ uint16 send(SOCKET s, const uint8 * buf, uint16 len, bool retry)
 
 
   // copy data
-  send_data_processing(s, (uint8 *)buf, ret);
+  send_data_processing(s, (uint8_t *)buf, ret);
   IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_SEND);
 
   /* wait to process the command... */
@@ -316,9 +316,9 @@ uint16 send(SOCKET s, const uint8 * buf, uint16 len, bool retry)
 
 @return  received data size for success else -1.
 */
-uint16 recv(SOCKET s, uint8 * buf, uint16 len)
+uint16_t recv(SOCKET s, uint8_t * buf, uint16_t len)
 {
-   uint16 ret=0;
+   uint16_t ret=0;
    if ( len > 0 )
    {
       recv_data_processing(s, buf, len);

@@ -9,19 +9,19 @@
 #define INC_SOCKET_H_
 
 #include "main.h"
-#include "Types.h"
+//#include "Types.h"
 
 
-extern uint8 socket(SOCKET s, uint8 protocol, uint16 port, uint8 flag); // Opens a socket(TCP or UDP or IP_RAW mode)
+extern uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag); // Opens a socket(TCP or UDP or IP_RAW mode)
 extern void close(SOCKET s); // Close socket
-extern uint8 connect(SOCKET s, uint8 * addr, uint16 port); // Establish TCP connection (Active connection)
+extern uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port); // Establish TCP connection (Active connection)
 extern void disconnect(SOCKET s); // disconnect the connection
-extern uint8 listen(SOCKET s);	// Establish TCP connection (Passive connection)
-extern uint16 send(SOCKET s, const uint8 * buf, uint16 len, bool retry); // Send data (TCP)
-extern uint16 recv(SOCKET s, uint8 * buf, uint16 len);	// Receive data (TCP)
-extern uint16 sendto(SOCKET s, const uint8 * buf, uint16 len, uint8 * addr, uint16 port); // Send data (UDP/IP RAW)
-extern uint16 recvfrom(SOCKET s, uint8 * buf, uint16 len, uint8 * addr, uint16  *port); // Receive data (UDP/IP RAW)
-int8 Socket_GetStatusToString(uint8 socket, char *mt);
+extern uint8_t listen(SOCKET s);	// Establish TCP connection (Passive connection)
+extern uint16_t send(SOCKET s, const uint8_t * buf, uint16_t len, bool retry); // Send data (TCP)
+extern uint16_t recv(SOCKET s, uint8_t * buf, uint16_t len);	// Receive data (TCP)
+extern uint16_t sendto(SOCKET s, const uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t port); // Send data (UDP/IP RAW)
+extern uint16_t recvfrom(SOCKET s, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t  *port); // Receive data (UDP/IP RAW)
+char Socket_GetStatusToString(uint8_t socket, char *mt);
 void Socket_Trace(char* tag, uint8_t s);
 
 #endif /* INC_SOCKET_H_ */

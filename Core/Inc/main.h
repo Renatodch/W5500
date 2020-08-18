@@ -49,18 +49,21 @@ extern "C" {
 #include "stdint.h"
 #include "stdarg.h"
 #include "stdio.h"
+
 /**** Includes principales *************/
 #include "spi1.h"
 #include "w5500.h"
 #include "socket.h"
-/******************************************/
 
-/********Includes de Referencia*************/
-#include "eeprom.h"
-#include "Types.h"
+/********Includes del CLib *****************/
 #include "Timer.h"
 #include "Uint32.h"
+#include "Str.h"
+
+/********Includes de Referencia*************/
 #include "Test.h"
+#include "eeprom.h"
+#include "Pagina.h"
 /*****************************************/
 
 /* USER CODE END Includes */

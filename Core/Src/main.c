@@ -51,12 +51,13 @@ TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 char w5500Buf[64];
-uint32_t eepromBuf[100];
 Timer Led;
 Timer net;
 TcpClient	devtcc;
 ServerConnection websc;
 WebServer webServer;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,21 +78,7 @@ static void MX_NVIC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void grabarDato()
-{
-	char valor[100];
 
-	strcpy(valor,"RDY");
-	EE_Writes(0,1,(uint32_t *)valor);
-
-}
-
-static void leerDato()
-{
-
-	EE_Reads(0,4,(uint32_t *)eepromBuf);
-	for(int i = 0; i<4; i++) T("Dato Leido: %d",eepromBuf[i]);
-}
 /* USER CODE END 0 */
 
 /**
@@ -100,6 +87,7 @@ static void leerDato()
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -153,14 +141,11 @@ int main(void)
 
   ServerConnection_Init(&websc, SOCKET_2TCP, 80, WebServer_ListenEventHandler);
 
-  Socket_Trace("Client 1er",devtcc.socket);
+  WebServer_Init();
 
-  Socket_Trace("Server 2do",websc.socket);
+  Socket_Trace("Cliente 1er",devtcc.socket);
+  Socket_Trace("Web Server 2do",websc.socket);
 
-
-  //WebServer_Init();
-  //grabarDato();
-  //leerDato();
 
   /* USER CODE END 2 */
 
@@ -170,22 +155,20 @@ int main(void)
   {
 	  //Pulso de vida
 	  if(Timer_Elapsed(&Led)){
-		  Socket_Trace("Client 1er",devtcc.socket);
-		  Socket_Trace("Server 2do",websc.socket);
+		  Socket_Trace("Cliente 1er",devtcc.socket);
+		  Socket_Trace("Web Server 2do",websc.socket);
 
 		  LED_PLC_GPIO_Port->ODR ^=LED_PLC_Pin;
 		  LED_CPU_GPIO_Port->ODR ^=LED_CPU_Pin;
 		  Timer_Start(&Led);
 	  }
-	  if(Timer_Elapsed(&net)){
-		  //Net_Init();
-	  }
+
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
-	  //ServerConn_Events(&websc);
+	  ServerConn_Events(&websc);
 
 	  TcpClientConn_Events(&devtcc, 50001);
 

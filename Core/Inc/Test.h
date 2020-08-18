@@ -67,20 +67,20 @@
 //=================================================
 typedef struct _CONFIG_MSG
 {
-	uint8 Mac[6];
-	uint8 IpDevice[4];
-	uint8 Sub[4];
-	uint8 Gw[4];
-	uint8 DNS_ServerConnection_IP[4];
-	uint8  DHCP;
+	uint8_t Mac[6];
+	uint8_t IpDevice[4];
+	uint8_t Sub[4];
+	uint8_t Gw[4];
+	uint8_t DNS_ServerConnection_IP[4];
+	uint8_t  DHCP;
 }
 CONFIG_MSG;
 
 
 typedef struct _CONFIG_TYPE_DEF
 {
-	uint16 port;
-	uint8 destip[4];
+	uint16_t port;
+	uint8_t destip[4];
 }CHCONFIG_TYPE_DEF;
 
 
@@ -102,8 +102,8 @@ typedef struct _CONFIG_TYPE_DEF
 #define TX_RX_MAX_BUF_SIZE	4096//2048
 //#define TX_BUF	0x20004000
 //#define RX_BUF	(TX_BUF+TX_RX_MAX_BUF_SIZE)
-extern uint8 TX_BUF[TX_RX_MAX_BUF_SIZE];
-//extern uint8 RX_BUF[TX_RX_MAX_BUF_SIZE];
+extern uint8_t TX_BUF[TX_RX_MAX_BUF_SIZE];
+//extern uint8_t RX_BUF[TX_RX_MAX_BUF_SIZE];
 
 
 #define EEPROM_USUARIO						0
@@ -167,7 +167,7 @@ void 			TcpClientConn_Send_String(TcpClient *p, char * data_buf);
 uint8_t 		TcpClientConn_SendStream(TcpClient *p, uint8_t * data_buf, 	uint16_t len);
 void 			TcpClientConn_Events(TcpClient *p, uint16_t port);
 void 			TcpClientConn_To_String(TcpClient *p, char *mt);
-void 			TcpClientConn_Init(TcpClient *p, char socket, uint8 * ipDest, uint16_t portDest, Receiver_EventHandler receiver_EventHandler, 	OnConnection_EventHandler	onConnection_EventHandler);
+void 			TcpClientConn_Init(TcpClient *p, char socket, uint8_t * ipDest, uint16_t portDest, Receiver_EventHandler receiver_EventHandler, 	OnConnection_EventHandler	onConnection_EventHandler);
 /********************************************************************************************************************************************************************************************************/
 /********************************************************************************************************************************************************************************************************/
 
@@ -233,9 +233,6 @@ void WebServer_Init(void);
 void WebServer_WriteTable(char *prms);
 
 
-//Pages
-void page1(void);
-void page2(void);
 
 
 /********************************************************************************************************************************************************************************************************/
@@ -243,31 +240,31 @@ void page2(void);
 //Debug
 void T(char *format,...);
 
-extern uint8 Enable_DHCP;
+extern uint8_t Enable_DHCP;
 
-extern uint8 IpServer[4];
-extern uint16 PortServer;
-extern uint8 MAC[6];
+extern uint8_t IpServer[4];
+extern uint16_t PortServer;
+extern uint8_t MAC[6];
 
-extern uint8 IpDevice[4];//IpDevice Address
-extern uint8 GateWay[4];//Gateway Address
-extern uint8 SubNet[4];//SubnetMask Address
+extern uint8_t IpDevice[4];//IpDevice Address
+extern uint8_t GateWay[4];//Gateway Address
+extern uint8_t SubNet[4];//SubnetMask Address
 
-extern uint8 IpTrace[4];//IpTrace Address
-extern uint16 PortTrace;
+extern uint8_t IpTrace[4];//IpTrace Address
+extern uint16_t PortTrace;
 
-extern uint16 any_port;
+extern uint16_t any_port;
 
 extern CONFIG_MSG Config_Msg;
 extern CHCONFIG_TYPE_DEF Chconfig_Type_Def;
 
-extern uint16 PortServer;
-extern uint8 IpServer[4] ;
+extern uint16_t PortServer;
+extern uint8_t IpServer[4] ;
 
 //TX MEM SIZE- SOCKET 0-7:4KB
 //RX MEM SIZE- SOCKET 0-7:4KB
-extern uint8 txsize[MAX_SOCK_NUM];
-extern uint8 rxsize[MAX_SOCK_NUM];
+extern uint8_t txsize[MAX_SOCK_NUM];
+extern uint8_t rxsize[MAX_SOCK_NUM];
 /* Extern variables ----------------------------------------------------------*/
 
 

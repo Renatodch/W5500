@@ -9,7 +9,7 @@
 #include "main.h"
 
 
-void IINCHIP_WRITE( uint32 addrbsb,  uint8 data)
+void IINCHIP_WRITE( uint32_t addrbsb,  uint8_t data)
 {
 	uint8_t cmd[4] = {0};
 
@@ -28,7 +28,7 @@ void IINCHIP_WRITE( uint32 addrbsb,  uint8 data)
 
 }
 
-uint8 IINCHIP_READ(uint32 addrbsb)
+uint8_t IINCHIP_READ(uint32_t addrbsb)
 {
 	uint8_t cmd[3] = {0};
 	uint8_t buf = 0;
@@ -49,7 +49,7 @@ uint8 IINCHIP_READ(uint32 addrbsb)
    return buf;
 }
 
-uint16 wiz_write_buf(uint32 addrbsb,uint8* buf,uint16 len)
+uint16_t wiz_write_buf(uint32_t addrbsb,uint8_t* buf,uint16_t len)
 {
    uint8_t cmd[3] = {0};
 
@@ -70,7 +70,7 @@ uint16 wiz_write_buf(uint32 addrbsb,uint8* buf,uint16 len)
    return len;
 }
 
-uint16 wiz_read_buf(uint32 addrbsb, uint8* buf,uint16 len)
+uint16_t wiz_read_buf(uint32_t addrbsb, uint8_t* buf,uint16_t len)
 {
   uint8_t cmd[3]={0};
 
@@ -119,9 +119,7 @@ void W5500_ResetSoftware(void){
 void W5500_Init(void)
 {
 	uint8_t tmp_array[8]={0};
-    uint8 i;
-
-    //W5500_Init();
+    uint8_t i;
 
     T("W5500_Reset();");
 	W5500_Reset();
@@ -152,6 +150,9 @@ void W5500_Init(void)
     //Destination Ip address for TCP Client
     for (i = 0 ; i < 4; i++) Chconfig_Type_Def.destip[i] = IpServer[i];
     Chconfig_Type_Def.port = PortServer;
+
+    //set ping block mode
+    /*Falta implementar*/
 
     //set retry time-value: retransmission timeout = 200 ms
     setRTR(2000);
@@ -186,24 +187,24 @@ void W5500_Init(void)
    #include "md5.h"
 #endif
 
-static uint8 I_STATUS[MAX_SOCK_NUM];
-static uint16 SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
-static uint16 RSIZE[MAX_SOCK_NUM]; /**< Max Rx buffer size by each channel */
+static uint8_t I_STATUS[MAX_SOCK_NUM];
+static uint16_t SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
+static uint16_t RSIZE[MAX_SOCK_NUM]; /**< Max Rx buffer size by each channel */
 
-uint8 getISR(uint8 s)
+uint8_t getISR(uint8_t s)
 {
   return I_STATUS[s];
 }
-void putISR(uint8 s, uint8 val)
+void putISR(uint8_t s, uint8_t val)
 {
    I_STATUS[s] = val;
 }
 
-uint16 getIINCHIP_RxMAX(uint8 s)
+uint16_t getIINCHIP_RxMAX(uint8_t s)
 {
    return RSIZE[s];
 }
-uint16 getIINCHIP_TxMAX(uint8 s)
+uint16_t getIINCHIP_TxMAX(uint8_t s)
 {
    return SSIZE[s];
 }
@@ -241,10 +242,10 @@ other 3 channels couldn't be used, for there's no available memory.\n
 If two 4KBytes memory are assigned to two each channels, \n
 other 2 channels couldn't be used, for there's no available memory.\n
 */
-void sysinit( uint8 * tx_size, uint8 * rx_size  )
+void sysinit( uint8_t * tx_size, uint8_t * rx_size  )
 {
-  int16 i;
-  int16 ssum,rsum;
+  int i;
+  int ssum,rsum;
 #ifdef __DEF_IINCHIP_DBG__
   printf("sysinit()\r\n");
 #endif
@@ -260,8 +261,8 @@ void sysinit( uint8 * tx_size, uint8 * rx_size  )
          printf("tx_size[%d]: %d, Sn_TXMEM_SIZE = %d\r\n",i, tx_size[i], IINCHIP_READ(Sn_TXMEM_SIZE(i)));
          printf("rx_size[%d]: %d, Sn_RXMEM_SIZE = %d\r\n",i, rx_size[i], IINCHIP_READ(Sn_RXMEM_SIZE(i)));
 #endif
-    SSIZE[i] = (int16)(0);
-    RSIZE[i] = (int16)(0);
+    SSIZE[i] = (int)(0);
+    RSIZE[i] = (int)(0);
 
 
     if (ssum <= 16384)
@@ -269,22 +270,22 @@ void sysinit( uint8 * tx_size, uint8 * rx_size  )
          switch( tx_size[i] )
       {
       case 1:
-        SSIZE[i] = (int16)(1024);
+        SSIZE[i] = (int)(1024);
         break;
       case 2:
-        SSIZE[i] = (int16)(2048);
+        SSIZE[i] = (int)(2048);
         break;
       case 4:
-        SSIZE[i] = (int16)(4096);
+        SSIZE[i] = (int)(4096);
         break;
       case 8:
-        SSIZE[i] = (int16)(8192);
+        SSIZE[i] = (int)(8192);
         break;
       case 16:
-        SSIZE[i] = (int16)(16384);
+        SSIZE[i] = (int)(16384);
       break;
       default :
-        RSIZE[i] = (int16)(2048);
+        RSIZE[i] = (int)(2048);
         break;
       }
     }
@@ -294,22 +295,22 @@ void sysinit( uint8 * tx_size, uint8 * rx_size  )
          switch( rx_size[i] )
       {
       case 1:
-        RSIZE[i] = (int16)(1024);
+        RSIZE[i] = (int)(1024);
         break;
       case 2:
-        RSIZE[i] = (int16)(2048);
+        RSIZE[i] = (int)(2048);
         break;
       case 4:
-        RSIZE[i] = (int16)(4096);
+        RSIZE[i] = (int)(4096);
         break;
       case 8:
-        RSIZE[i] = (int16)(8192);
+        RSIZE[i] = (int)(8192);
         break;
       case 16:
-        RSIZE[i] = (int16)(16384);
+        RSIZE[i] = (int)(16384);
         break;
       default :
-        RSIZE[i] = (int16)(2048);
+        RSIZE[i] = (int)(2048);
         break;
       }
     }
@@ -323,65 +324,65 @@ void sysinit( uint8 * tx_size, uint8 * rx_size  )
 /*###################################### SETTERS ############################################*/
 
 //set gateway addr
-void setGAR(uint8 * addr ) /**< a pointer to a 4 -byte array responsible to set the Gateway IP address. */
+void setGAR(uint8_t * addr ) /**< a pointer to a 4 -byte array responsible to set the Gateway IP address. */
 {
     wiz_write_buf(GAR0, addr, 4);
 }
 
 //set subnet mask
-void setSUBR(uint8 * addr)
+void setSUBR(uint8_t * addr)
 {
     wiz_write_buf(SUBR0, addr, 4);
 }
 
 //set mac addr
-void setSHAR(uint8 * addr)  /**< a pointer to a 6 -byte array responsible to set the MAC address. */
+void setSHAR(uint8_t * addr)  /**< a pointer to a 6 -byte array responsible to set the MAC address. */
 
 {
   wiz_write_buf(SHAR0, addr, 6);
 }
 
 //set ip addr
-void setSIPR(uint8 * addr)  /**< a pointer to a 4 -byte array responsible to set the Source IP address. */
+void setSIPR(uint8_t * addr)  /**< a pointer to a 4 -byte array responsible to set the Source IP address. */
 {
     wiz_write_buf(SIPR0, addr, 4);
 }
 
 //set mode
-void setMR(uint8 val)
+void setMR(uint8_t val)
 {
   IINCHIP_WRITE(MR,val);
 }
 
 /************************************ GETTERS ***********************************/
 //get gateway addr
-void getGAR(uint8 * addr)
+void getGAR(uint8_t * addr)
 {
     wiz_read_buf(GAR0, addr, 4);
 }
 //get subnet mask
-void getSUBR(uint8 * addr)
+void getSUBR(uint8_t * addr)
 {
     wiz_read_buf(SUBR0, addr, 4);
 }
 //get mac addr
-void getSHAR(uint8 * addr)
+void getSHAR(uint8_t * addr)
 {
     wiz_read_buf(SHAR0, addr, 6);
 }
 
 //get ip
-void getSIPR(uint8 * addr)
+void getSIPR(uint8_t * addr)
 {
     wiz_read_buf(SIPR0, addr, 4);
 }
 //get mode
-uint8 getMR( void )
+uint8_t getMR( void )
 {
    return IINCHIP_READ(MR);
 }
 //gets Interrupt register in common register.
-uint8 getIR( void )
+uint8_t getIR( void )
 {
    return IINCHIP_READ(IR);
 }
@@ -392,10 +393,10 @@ uint8 getIR( void )
 If there is no response from the peer or delay in response then retransmission
 will be there as per RTR (Retry Time-value Register)setting
 */
-void setRTR(uint16 timeout)
+void setRTR(uint16_t timeout)
 {
-  IINCHIP_WRITE(RTR0,(uint8)((timeout & 0xff00) >> 8));
-  IINCHIP_WRITE(RTR1,(uint8)(timeout & 0x00ff));
+  IINCHIP_WRITE(RTR0,(uint8_t)((timeout & 0xff00) >> 8));
+  IINCHIP_WRITE(RTR1,(uint8_t)(timeout & 0x00ff));
 }
 
 /**
@@ -404,7 +405,7 @@ void setRTR(uint16 timeout)
 If there is no response from the peer or delay in response then recorded time
 as per RTR & RCR register setting then time out will occur.
 */
-void setRCR(uint8 retry)
+void setRCR(uint8_t retry)
 {
   IINCHIP_WRITE(RCR,retry);
 }
@@ -415,7 +416,7 @@ void setRCR(uint8 retry)
 If any bit in IMR is set as '0' then there is not interrupt signal though the bit is
 set in IR register.
 */
-void clearIR(uint8 mask)
+void clearIR(uint8_t mask)
 {
   IINCHIP_WRITE(IR, ~mask | getIR() ); // must be setted 0x10.
 }
@@ -423,13 +424,13 @@ void clearIR(uint8 mask)
 /**
 @brief  This sets the maximum segment size of TCP in Active Mode), while in Passive Mode this is set by peer
 */
-void setSn_MSS(SOCKET s, uint16 Sn_MSSR)
+void setSn_MSS(SOCKET s, uint16_t Sn_MSSR)
 {
-  IINCHIP_WRITE( Sn_MSSR0(s), (uint8)((Sn_MSSR & 0xff00) >> 8));
-  IINCHIP_WRITE( Sn_MSSR1(s), (uint8)(Sn_MSSR & 0x00ff));
+  IINCHIP_WRITE( Sn_MSSR0(s), (uint8_t)((Sn_MSSR & 0xff00) >> 8));
+  IINCHIP_WRITE( Sn_MSSR1(s), (uint8_t)(Sn_MSSR & 0x00ff));
 }
 
-void setSn_TTL(SOCKET s, uint8 ttl)
+void setSn_TTL(SOCKET s, uint8_t ttl)
 {
    IINCHIP_WRITE( Sn_TTL(s) , ttl);
 }
@@ -437,13 +438,13 @@ void setSn_TTL(SOCKET s, uint8 ttl)
 
 
 //socket interrupt status
-uint8 getSn_IR(SOCKET s)
+uint8_t getSn_IR(SOCKET s)
 {
    return IINCHIP_READ(Sn_IR(s));
 }
 
 //socket status
-uint8 getSn_SR(SOCKET s)
+uint8_t getSn_SR(SOCKET s)
 {
    return IINCHIP_READ(Sn_SR(s));
 }
@@ -455,9 +456,9 @@ uint8 getSn_SR(SOCKET s)
 This gives free buffer size of transmit buffer. This is the data size that user can transmit.
 User shuold check this value first and control the size of transmitting data
 */
-uint16 getSn_TX_FSR(SOCKET s)
+uint16_t getSn_TX_FSR(SOCKET s)
 {
-  uint16 val=0,val1=0;
+  uint16_t val=0,val1=0;
   do
   {
     val1 = IINCHIP_READ(Sn_TX_FSR0(s));
@@ -477,9 +478,9 @@ uint16 getSn_TX_FSR(SOCKET s)
 
 This gives size of received data in receive buffer.
 */
-uint16 getSn_RX_RSR(SOCKET s)
+uint16_t getSn_RX_RSR(SOCKET s)
 {
-  uint16 val=0,val1=0;
+  uint16_t val=0,val1=0;
   do
   {
     val1 = IINCHIP_READ(Sn_RX_RSR0(s));
@@ -500,10 +501,10 @@ uint16 getSn_RX_RSR(SOCKET s)
 This function read the Tx write pointer register and after copy the data in buffer update the Tx write pointer
 register. User should read upper byte first and lower byte later to get proper value.
 */
-void send_data_processing(SOCKET s, uint8 *data, uint16 len)
+void send_data_processing(SOCKET s, uint8_t *data, uint16_t len)
 {
-  uint16 ptr = 0;
-  uint32 addrbsb = 0;
+  uint16_t ptr = 0;
+  uint32_t addrbsb = 0;
 
   if(len == 0)
   {
@@ -515,12 +516,12 @@ void send_data_processing(SOCKET s, uint8 *data, uint16 len)
   ptr = IINCHIP_READ( Sn_TX_WR0(s) );
   ptr = ((ptr & 0x00ff) << 8) + IINCHIP_READ(Sn_TX_WR1(s));
 
-  addrbsb = (uint32)(ptr<<8) + (s<<5) + 0x10;
+  addrbsb = (uint32_t)(ptr<<8) + (s<<5) + 0x10;
   wiz_write_buf(addrbsb, data, len);
 
   ptr += len;
-  IINCHIP_WRITE( Sn_TX_WR0(s) ,(uint8)((ptr & 0xff00) >> 8));
-  IINCHIP_WRITE( Sn_TX_WR1(s),(uint8)(ptr & 0x00ff));
+  IINCHIP_WRITE( Sn_TX_WR0(s) ,(uint8_t)((ptr & 0xff00) >> 8));
+  IINCHIP_WRITE( Sn_TX_WR1(s),(uint8_t)(ptr & 0x00ff));
 }
 
 
@@ -531,10 +532,10 @@ This function read the Rx read pointer register
 and after copy the data from receive buffer update the Rx write pointer register.
 User should read upper byte first and lower byte later to get proper value.
 */
-void recv_data_processing(SOCKET s, uint8 *data, uint16 len)
+void recv_data_processing(SOCKET s, uint8_t *data, uint16_t len)
 {
-  uint16 ptr = 0;
-  uint32 addrbsb = 0;
+  uint16_t ptr = 0;
+  uint32_t addrbsb = 0;
 
   if(len == 0)
   {
@@ -545,12 +546,12 @@ void recv_data_processing(SOCKET s, uint8 *data, uint16 len)
   ptr = IINCHIP_READ( Sn_RX_RD0(s) );
   ptr = ((ptr & 0x00ff) << 8) + IINCHIP_READ( Sn_RX_RD1(s) );
 
-  addrbsb = (uint32)(ptr<<8) + (s<<5) + 0x18;
+  addrbsb = (uint32_t)(ptr<<8) + (s<<5) + 0x18;
   wiz_read_buf(addrbsb, data, len);
   ptr += len;
 
-  IINCHIP_WRITE( Sn_RX_RD0(s), (uint8)((ptr & 0xff00) >> 8));
-  IINCHIP_WRITE( Sn_RX_RD1(s), (uint8)(ptr & 0x00ff));
+  IINCHIP_WRITE( Sn_RX_RD0(s), (uint8_t)((ptr & 0xff00) >> 8));
+  IINCHIP_WRITE( Sn_RX_RD1(s), (uint8_t)(ptr & 0x00ff));
 }
 
 
