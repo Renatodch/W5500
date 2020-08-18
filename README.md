@@ -16,7 +16,7 @@ types.h
 
 ## Ejemplos  
 
-## Requerimientos
+## Requerimientos  
 1. Funcion para Inicializar: reset el W5500  
 2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible [DNS client, DHCP])  
 3. Funcion para servidor web para poder configurar la tarjeta.
@@ -25,7 +25,7 @@ types.h
 6. Funcion para recibir un archivo .txt desde una PC-cliente.       
 7. ServerWeb + sockets   
   
-## Metodos
+## Descripción
 
 ### w5500 (Descripción en W5500.h)
 -Funciones generales del chip  
