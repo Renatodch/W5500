@@ -28,17 +28,17 @@ types.h
 ## Metodos
 
 ### w5500 (Descripción en W5500.h)
--Funciones generales del chip
--Funciones interface con spi1
--Funciones interface con socket
+-Funciones generales del chip  
+-Funciones interface con spi1  
+-Funciones interface con socket  
 
 Comentarios:
--ahora: void W5500_Init(); antes void Net_Init(void)
--chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK
+-ahora: void W5500_Init(); antes void Net_Init(void)  
+-chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK  
 
-### socket 
+### socket    
 
-### spi1   
+### spi1     
 
 
 
