@@ -17,11 +17,11 @@ types.h
 ## Ejemplos  
 ### Ejemplo
 
-### Ejemplo con multiples sockets:
--1er socket TCP_Client: Transmitir & Recibir
--2do socket TCP_Server: Http com, parsear datos enviados desde mi pc. Transferir file.txt
--3er socket DNS_Client: ---
--4to socket DHCP
+### Ejemplo con multiples sockets:  
+-1er socket TCP_Client: Transmitir & Recibir  
+-2do socket TCP_Server: Http com, parsear datos enviados desde mi pc. Transferir file.txt  
+-3er socket DNS_Client: ---  
+-4to socket DHCP  
 
 ## Requerimientos  
 1. Funcion para Inicializar: reset el W5500 (OK)
@@ -40,9 +40,9 @@ types.h
 
 Comentarios:  
 -ahora: void W5500_Init(); antes void Net_Init(void)  
--chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK  
--Falta metodo para configurar el ping block mode (bloquea respuesta a un ping request)
--Types.h ya no existe. Se estandarizó al tipo de dato que maneja hal y algunas de definiciones en W5500.h
+-chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK    
+-Falta metodo para configurar el ping block mode (bloquea respuesta a un ping request)  
+-Types.h ya no existe. Se estandarizó al tipo de dato que maneja hal y algunas de definiciones en W5500.h  
 
 ### socket    
 
