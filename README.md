@@ -18,8 +18,8 @@ types.h
 ### Ejemplo
 
 ### Ejemplo con multiples sockets:  
--1er socket TCP_Client: echo response via eeprom
--2do socket TCP_Server: Http com, parsear datos enviados desde mi pc. Transferir file.txt  
+-1er socket TCP_Client: echo response via eeprom  
+-2do socket TCP_Server: Http com, parsear datos enviados desde mi pc. Transferir file.txt    
 -3er socket DNS_Client: ---  
 -4to socket DHCP  
 
