@@ -14,38 +14,47 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+
 // Configuration Network Information of W5500
 uint8_t Enable_DHCP = OFF;
 uint8_t MAC[6] = {0x00, 0x08, 0xDC, 0x47, 0x47, 0x54};//MAC Address
-
-
 uint8_t IpDevice[4] = {192,168,0,8};//IpDevice Address
 uint8_t GateWay[4] = {192,168,0,1};//Gateway Address
 uint8_t SubNet[4] = {255,255,255,0};//SubnetMask Address
 
+uint8_t Domain_name[] = "www.google.com";
+uint8_t Domain_IP[4]  = {0, };
+
 uint8_t IpTrace[4];//IpTrace Address
 uint16_t PortTrace;
 
-uint16_t any_port = 1001;
 
 CONFIG_MSG Config_Msg;
 CHCONFIG_TYPE_DEF Chconfig_Type_Def;
 
 uint16_t PortServer = 8888;
 uint8_t IpServer[4] = {192,168,0,3}; //mi PC
+uint8_t DNS_Server_1[4] = {8,8,8,8};//1st DNS server
+uint8_t DNS_Server_2[4] = {168, 126, 63, 1};//Secondary server
 
+
+/*About Sockets*/
+uint16_t any_port = 1001;
+uint16_t io_mode = 0;
+uint16_t is_sending = 0;
+uint16_t remained_size[MAX_SOCK_NUM] = {0,0,};
+uint8_t  pack_info[MAX_SOCK_NUM] = {0,};
 //TX MEM SIZE- SOCKET 0-7:4KB
 //RX MEM SIZE- SOCKET 0-7:4KB
-uint8_t txsize[MAX_SOCK_NUM] = {4,4,4,4,4,4,4,4};//{2,2,2,2,2,2,2,2};
-uint8_t rxsize[MAX_SOCK_NUM] = {4,4,4,4,4,4,4,4};//{2,2,2,2,2,2,2,2};
+uint8_t txsize[MAX_SOCK_NUM] = {4,4,4,4,4,4,4,4};
+uint8_t rxsize[MAX_SOCK_NUM] = {4,4,4,4,4,4,4,4};
+/*********/
+
 /* Extern variables ----------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
 /* Extern function prototypes ------------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-
-
-
 
 /*##############################################################################################################*/
 /*############################################ TCP CLIENT ########################################################*/
@@ -75,7 +84,7 @@ uint8_t eepromBuf[100]={0};
 
 void Client_Receiver_EventHandler(uint8_t *data, int len){
 
-	int i = 0, fixedLen=0;
+	int fixedLen=0;
 
 	T("Recibi: %s, len:%d",(char *)data,len);
 
@@ -90,7 +99,10 @@ void Client_Receiver_EventHandler(uint8_t *data, int len){
 
 	T("data leida de memoria: %s",(char *)eepromBuf);
 
-	TcpClientConn_SendStream(&devtcc, eepromBuf, strlen(eepromBuf));
+	uint8_t size = strlen((char *)eepromBuf);
+	if(size)
+		TcpClientConn_SendStream(&devtcc, eepromBuf, size);
+	else return;
 
 }
 void Client_onConnection_EventHandler(void){
@@ -146,7 +158,7 @@ void TcpClientConn_Events(TcpClient *p, uint16_t port)
 		case SOCK_CLOSED:/* Estado de inicio: socket cerrado*/
 			if(!ch_status[p->socket])
 			{
-				 T("\r\nTCP Client %d Started. port: %d", p->socket, port);
+				 T("TCP Client %d Started. port: %d", p->socket, port);
 				 ch_status[p->socket] = 1;
 			}
 			if(!socket(p->socket, Sn_MR_TCP, any_port++, 0x00))    /* init o reinit el socket */
@@ -161,6 +173,7 @@ void TcpClientConn_Events(TcpClient *p, uint16_t port)
 			if(Timer_Elapsed(&p->request_Timer) )
 			{  /* For TCP client's connection request delay : 3 sec */
 				connect(p->socket, p->dest_Ip, p->dest_Port); /* Try to connect to TCP server(Socket, DestIP, DestPort) */
+				T("status: %d - Connect socket %d ", getSn_SR(p->socket), p->socket);
 				Timer_Start(&p->request_Timer);
 			}
 		break;
@@ -173,19 +186,18 @@ void TcpClientConn_Events(TcpClient *p, uint16_t port)
 void TcpClientConn_Init(TcpClient *p, char socket, uint8_t * ipDest, uint16_t portDest,
 						Receiver_EventHandler receiver_EventHandler, 	OnConnection_EventHandler	onConnection_EventHandler)
 {
-		T("TcpClientConn_Init()... ");
-		p->socket = socket;
-		p->dest_Ip[0] = ipDest[0];
-		p->dest_Ip[1] = ipDest[1];
-		p->dest_Ip[2] = ipDest[2];
-		p->dest_Ip[3] = ipDest[3];
-		p->dest_Port = portDest;
-		Timer_Init(&p->request_Timer, 3000);
-		Timer_Start(&p->request_Timer);
-		ch_status[p->socket] = 0;
-		p->onConnection_EventHandler = onConnection_EventHandler;
-		p->receiver_EventHandler = receiver_EventHandler;
-		T("TcpClientConn_Init()<--- ");
+	T("TcpClientConn_Init()... ");
+	p->socket = socket;
+	p->dest_Ip[0] = ipDest[0];
+	p->dest_Ip[1] = ipDest[1];
+	p->dest_Ip[2] = ipDest[2];
+	p->dest_Ip[3] = ipDest[3];
+	p->dest_Port = portDest;
+	Timer_Init(&p->request_Timer, 3000);
+	Timer_Start(&p->request_Timer);
+	ch_status[p->socket] = 0;
+	p->onConnection_EventHandler = onConnection_EventHandler;
+	p->receiver_EventHandler = receiver_EventHandler;
 }
 
 
@@ -240,7 +252,7 @@ uint8_t * data_buf = TX_BUF;
 	case SOCK_CLOSED:                                       /* if a socket is closed */
 		if(!ch_status[p->socket])
 		{
-			T("%d : ServerConnection Started. port : %d", p->socket, p->port);
+			T("ServerConnection %d Started. port: %d", p->socket, p->port);
 			ch_status[p->socket] = 1;
 		}
 		if(!socket(p->socket,(Sn_MR_ND|Sn_MR_TCP), p->port,0x00))    /* reinitialize the socket */
@@ -254,7 +266,7 @@ uint8_t * data_buf = TX_BUF;
 
 	case SOCK_INIT:   /* if a socket is initiated */
 		listen(p->socket);
-		T("%x :LISTEN socket %d ", getSn_SR(p->socket), p->socket);
+		T("status: %d - LISTEN socket %d ", getSn_SR(p->socket), p->socket);
 	break;
 
 		default:break;
@@ -343,7 +355,7 @@ unsigned char WebServer_IsIp(char *request)
 void WebServer_WriteEeprom_Usuario(char *prms)
 {
 	char formatParams[1024] = {0};
-	char eeprom[1024] = {0};
+	//char eeprom[1024] = {0};
 
 	if ( String_Has(prms) )
 	{
@@ -354,12 +366,13 @@ void WebServer_WriteEeprom_Usuario(char *prms)
 
 void WebServer_WriteTable(char *prms)
 {
+	/*
 	char *start = NULL;
 	char *end = NULL;
 	char name[64] = {0};
 	char filename[2048] = {0};
 	int len = 0;
-
+*/
 	T("void WebServer_WriteTable(char *prms)");
 
 	/*
@@ -402,10 +415,11 @@ void WebServer_WriteTable(char *prms)
 
 void WebServer_WriteEeprom_Factory(char *inParams)
 {
+	/*
 	char eepromWrite[550];
 	char formatParams[550];
 	char value[16];
-
+*/
 		if ( String_Has(inParams) )
 		{
 

@@ -12,9 +12,13 @@
 #include "main.h"
 
 #define	MAX_SOCK_NUM		8	/**< Maxmium number of socket */
-
 typedef uint8_t 			SOCKET;
 
+#define WIZCHIP_OFFSET_INC(ADDR, N)    (ADDR + (N<<8))
+#define WIZCHIP_CREG_BLOCK          0x00 	//< Common register block
+#define WIZCHIP_SREG_BLOCK(N)       (1+4*N) //< Socket N register block
+#define WIZCHIP_TXBUF_BLOCK(N)      (2+4*N) //< Socket N Tx buffer address block
+#define WIZCHIP_RXBUF_BLOCK(N)      (3+4*N) //< Socket N Rx buffer address block
 /**
  @brief Mode Register address
  * W5500 SPI Frame consists of 16bits Offset Address in Address Phase,
@@ -30,6 +34,24 @@ typedef uint8_t 			SOCKET;
  * Please, refer to W5500 datasheet for more detail about Memory Map.
  *
  */
+
+/* PHYCFGR register value */
+#define PHYCFGR_RST                  ~(1<<7)  //< For PHY reset, must operate AND mask.
+#define PHYCFGR_OPMD                 (1<<6)   // Configre PHY with OPMDC value
+#define PHYCFGR_OPMDC_ALLA           (7<<3)
+#define PHYCFGR_OPMDC_PDOWN          (6<<3)
+#define PHYCFGR_OPMDC_NA             (5<<3)
+#define PHYCFGR_OPMDC_100FA          (4<<3)
+#define PHYCFGR_OPMDC_100F           (3<<3)
+#define PHYCFGR_OPMDC_100H           (2<<3)
+#define PHYCFGR_OPMDC_10F            (1<<3)
+#define PHYCFGR_OPMDC_10H            (0<<3)
+#define PHYCFGR_DPX_FULL             (1<<2)
+#define PHYCFGR_DPX_HALF             (0<<2)
+#define PHYCFGR_SPD_100              (1<<1)
+#define PHYCFGR_SPD_10               (0<<1)
+#define PHYCFGR_LNK_ON               (1<<0)
+#define PHYCFGR_LNK_OFF              (0<<0)
 
 /**
  @brief Mode Register address
@@ -146,7 +168,7 @@ typedef uint8_t 			SOCKET;
 #define VERSIONR                    (0x003900)
 
 
-
+/*########################### SOCKET MACROS #######################################*/
 /**
  @brief socket Mode register
  */
@@ -241,6 +263,15 @@ typedef uint8_t 			SOCKET;
  */
 #define Sn_RX_WR0(ch)                   (0x002A08 + (ch<<5))
 #define Sn_RX_WR1(ch)                   (0x002B08 + (ch<<5))
+
+
+//Nuevos
+#define Sn_RX_RD(ch)        			((0x0028 << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
+#define Sn_DIPR(ch)        				((0x000C << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
+#define Sn_DPORT(ch)        			((0x0010 << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
+#define Sn_TXBUF_SIZE(ch)   			((0x001F << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
+#define Sn_PORT(ch)         				((0x0004 << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
+
 /**
  @brief socket interrupt mask register
  */
@@ -349,6 +380,7 @@ typedef uint8_t 			SOCKET;
 #define IPPROTO_ND                   77       /**< UNOFFICIAL net disk protocol */
 #define IPPROTO_RAW                  255      /**< Raw IP packet */
 
+
 /*############################# INTERFACE CON SPI #############################################################*/
 void IINCHIP_WRITE( uint32_t addrbsb,  uint8_t data);
 uint8_t IINCHIP_READ(uint32_t addrbsb);
@@ -358,17 +390,28 @@ uint16_t wiz_read_buf(uint32_t addrbsb, uint8_t* buf,uint16_t len);
 /*############################# FUNCIONES INTERFACE CON SOCKET ###################################################*/
 void send_data_processing(SOCKET s, uint8_t *wizdata, uint16_t len);
 void recv_data_processing(SOCKET s, uint8_t *wizdata, uint16_t len);
-
+void recv_data_ignore(uint8_t sn, uint16_t len);
 /*Setters*/
 void setSn_TTL(SOCKET s, uint8_t ttl);
 void setSn_MSS(SOCKET s, uint16_t Sn_MSSR); // set maximum segment size
+void setSn_DIPR(SOCKET sn,uint8_t * dipr);
+void setSn_DPORT(SOCKET sn,uint16_t dport);
+void setSn_CR(SOCKET sn, uint8_t cr);
+void setSn_IR(SOCKET sn, uint8_t ir);
+void setSn_RX_RD(SOCKET sn, uint8_t rxrd);
+void setSn_MR(SOCKET sn, uint8_t mr);
+void setSn_PORT(SOCKET sn, uint16_t port);
 
 /*Getters*/
-uint8_t getSn_IR(SOCKET s); // get socket interrupt status
-uint8_t getSn_SR(SOCKET s); // get socket status
-uint16_t getSn_TX_FSR(SOCKET s); // get socket TX free buf size
-uint16_t getSn_RX_RSR(SOCKET s); // get socket RX recv buf size
-uint8_t getSn_SR(SOCKET s);
+uint8_t getSn_IR(SOCKET s); // interrupt status
+uint8_t getSn_SR(SOCKET s); // status
+uint16_t getSn_TX_FSR(SOCKET s); // TX free buf size
+uint16_t getSn_RX_RSR(SOCKET s); // RX recv buf size
+uint8_t getSn_CR(SOCKET sn); //control
+uint8_t getSn_MR(SOCKET sn); //mode
+uint8_t getSn_RX_RD(SOCKET sn); //rx pointer
+uint8_t getSn_TXBUF_SIZE(SOCKET sn);
+uint16_t getSn_TxMAX(SOCKET sn);
 
 /*######################### FUNCIONES GENERALES DEL CHIP#####################################################*/
 void iinchip_init(void); // reset iinchip
@@ -379,6 +422,10 @@ void W5500_ResetSoftware(void);
 
 void clearIR(uint8_t mask); // clear interrupt
 void putISR(uint8_t s, uint8_t val);
+uint8_t getISR(uint8_t s);
+uint16_t getIINCHIP_RxMAX(uint8_t s);
+uint16_t getIINCHIP_TxMAX(uint8_t s);
+
 /*Setters*/
 void setGAR(uint8_t * addr); //gateway address
 void setSUBR(uint8_t * addr); //subnet mask address
@@ -389,15 +436,13 @@ void setRTR(uint16_t timeout); // set retry duration for data transmission, conn
 void setRCR(uint8_t retry); // set retry count (above the value, assert timeout interrupt)
 
 /*Getters*/
-uint8_t getISR(uint8_t s);
+uint8_t getPHYCFGR( void );
 uint8_t getIR( void );
 void getGAR(uint8_t * addr);
 void getSUBR(uint8_t * addr);
 void getSHAR(uint8_t * addr);
 void getSIPR(uint8_t * addr);
 uint8_t getMR( void );
-uint16_t getIINCHIP_RxMAX(uint8_t s);
-uint16_t getIINCHIP_TxMAX(uint8_t s);
 
 /**
  @brief WIZCHIP_OFFSET_INC on IINCHIP_READ/WRITE

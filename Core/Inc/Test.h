@@ -71,7 +71,7 @@ typedef struct _CONFIG_MSG
 	uint8_t IpDevice[4];
 	uint8_t Sub[4];
 	uint8_t Gw[4];
-	uint8_t DNS_ServerConnection_IP[4];
+	uint8_t DNS_1[4];
 	uint8_t  DHCP;
 }
 CONFIG_MSG;
@@ -85,10 +85,10 @@ typedef struct _CONFIG_TYPE_DEF
 
 
 #define SOCK_CONFIG		2	// UDP
-#define SOCK_DNS		2	// UDP
+#define SOCK_DNS		0	// UDP
 #define SOCK_DHCP		3	// UDP
 
-#define MAX_BUF_SIZE		1460
+#define MAX_BUF_SIZE	1460
 #define KEEP_ALIVE_TIME	30	// 30sec
 
 #define ON	1
@@ -97,33 +97,26 @@ typedef struct _CONFIG_TYPE_DEF
 #define HIGH		1
 #define LOW		0
 
-
 // SRAM address range is 0x2000 0000 ~ 0x2000 4FFF (20KB)
 #define TX_RX_MAX_BUF_SIZE	4096//2048
-//#define TX_BUF	0x20004000
-//#define RX_BUF	(TX_BUF+TX_RX_MAX_BUF_SIZE)
 extern uint8_t TX_BUF[TX_RX_MAX_BUF_SIZE];
-//extern uint8_t RX_BUF[TX_RX_MAX_BUF_SIZE];
+
 
 
 #define EEPROM_USUARIO						0
 
 #define EEPROM_SERIE						900
 
-#define EEPROM_EPOCH_TIME_ADDR				950		 /*NO Str*/
+#define EEPROM_EPOCH_TIME_ADDR				950
 
-#define EEPROM_FLASH_KEY_ADDR				958		 /*NO Str*/
-#define EEPROM_FLASH_READ_INDEX_ADDR		964    /*NO Str*/
-#define EEPROM_FLASH_WRITE_INDEX_ADDR		972		 /*NO Str*/
-
-
-#define EEPROM_OUT1							1032 					/*NO Str*/
-#define EEPROM_TABLA						1064          //TABLA
-#define EEPROM_EPOCH_TIME_TABLA				3400					//Fecha de tabla uploaded /*NO Str*/
+#define EEPROM_FLASH_KEY_ADDR				958
+#define EEPROM_FLASH_READ_INDEX_ADDR		964
+#define EEPROM_FLASH_WRITE_INDEX_ADDR		972
 
 
-
-
+#define EEPROM_OUT1							1032
+#define EEPROM_TABLA						1064
+#define EEPROM_EPOCH_TIME_TABLA				3400
 
 /***************************************************************************************************/
 /************************************  TCP CLIENTE *************************************************/
@@ -152,10 +145,10 @@ extern void Client_onConnection_EventHandler(void);
 
 typedef struct
 {
-		Timer			request_Timer;
-		uint8_t	 		dest_Ip[4];
-		uint16_t  		dest_Port;
-		uint8_t			socket;
+		Timer						request_Timer;
+		uint8_t	 					dest_Ip[4];
+		uint16_t  					dest_Port;
+		uint8_t						socket;
 		Receiver_EventHandler		receiver_EventHandler;
 		OnConnection_EventHandler	onConnection_EventHandler;
 }TcpClient;
@@ -178,8 +171,8 @@ typedef void (*Listen_EventHandler)(char *dat, int len);
 
 typedef struct
 {
-		uint16_t  						port;
-		uint8_t								socket;
+		uint16_t  				port;
+		uint8_t					socket;
 		Listen_EventHandler		listen_EventHandler;
 }ServerConnection;
 
@@ -188,6 +181,7 @@ void ServerConn_SendString(ServerConnection *p, const char * data_buf);
 void ServerConn_Events(ServerConnection *p);
 void ServerConnection_ToString(ServerConnection *p, char *mt);
 void ServerConnection_Init(ServerConnection *p, char socket, uint16_t port, Listen_EventHandler listen_EventHandler);
+
 
 
 /********************************************************************************************************************************************************************************************************/
@@ -249,22 +243,26 @@ extern uint8_t MAC[6];
 extern uint8_t IpDevice[4];//IpDevice Address
 extern uint8_t GateWay[4];//Gateway Address
 extern uint8_t SubNet[4];//SubnetMask Address
-
-extern uint8_t IpTrace[4];//IpTrace Address
-extern uint16_t PortTrace;
-
-extern uint16_t any_port;
+extern uint8_t DNS_Server_1[4];//1st DNS server
+extern uint8_t DNS_Server_2[4];//Secondary server
+extern uint8_t Domain_name[];    // for Example domain name
+extern uint8_t Domain_IP[4];
 
 extern CONFIG_MSG Config_Msg;
 extern CHCONFIG_TYPE_DEF Chconfig_Type_Def;
 
-extern uint16_t PortServer;
-extern uint8_t IpServer[4] ;
-
+/*About Sockets*/
+extern uint16_t any_port;
+extern uint16_t io_mode;
+extern uint16_t is_sending;
+extern uint16_t remained_size[MAX_SOCK_NUM];
+extern uint8_t  pack_info[MAX_SOCK_NUM];
 //TX MEM SIZE- SOCKET 0-7:4KB
 //RX MEM SIZE- SOCKET 0-7:4KB
 extern uint8_t txsize[MAX_SOCK_NUM];
 extern uint8_t rxsize[MAX_SOCK_NUM];
+/*********/
+
 /* Extern variables ----------------------------------------------------------*/
 
 

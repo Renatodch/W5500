@@ -12,6 +12,157 @@
 static uint16_t local_port;
 extern uint16_t sent_ptr;
 
+
+
+int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t *port)
+{
+	uint8_t  mr;
+	uint8_t  head[8];
+	uint16_t pack_len=0;
+
+	switch((mr=getSn_MR(sn)) & 0x0F)
+	{
+	  case Sn_MR_UDP:
+	  //case Sn_MR_IPRAW:
+	  //case Sn_MR_MACRAW:
+		 break;
+
+	  default:
+		 return SOCKERR_SOCKMODE;
+	}
+
+	T("Enter sock remained...");
+	if(remained_size[sn] == 0)
+	{
+		while(1)
+		{
+			pack_len = getSn_RX_RSR(sn);
+			if(getSn_SR(sn) == SOCK_CLOSED) return SOCKERR_SOCKCLOSED;
+			if( /*(sock_io_mode & (1<<sn)) &&*/ (pack_len == 0) ) return SOCK_BUSY;
+			if(pack_len != 0) break;
+		};
+	}
+
+
+	switch (mr & 0x07)
+	{
+	   case Sn_MR_UDP :
+		 if(remained_size[sn] == 0)
+		 {
+			recv_data_processing(sn, head, 8);
+			setSn_CR(sn,Sn_CR_RECV);
+			while(getSn_CR(sn));
+			// read peer's IP address, port number & packet length
+			addr[0] = head[0];
+			addr[1] = head[1];
+			addr[2] = head[2];
+			addr[3] = head[3];
+			*port = head[4];
+			*port = (*port << 8) + head[5];
+			remained_size[sn] = head[6];
+			remained_size[sn] = (remained_size[sn] << 8) + head[7];
+
+			pack_info[sn] = PACK_FIRST;
+		 }
+			if(len < remained_size[sn]) pack_len = len;
+			else pack_len = remained_size[sn];
+			//A20150601 : For W5300
+			len = pack_len;
+
+			//
+			// Need to packet length check (default 1472)
+			//
+			recv_data_processing(sn, buf, pack_len); // data copy.
+			break;
+
+		  default:
+			 recv_data_ignore(sn, pack_len); // data copy.
+			 remained_size[sn] = pack_len;
+			 break;
+	}
+	setSn_CR(sn,Sn_CR_RECV);
+	while(getSn_CR(sn)) ;
+
+	remained_size[sn] -= pack_len;
+
+	if(remained_size[sn] != 0)
+	{
+	   pack_info[sn] |= PACK_REMAINED;
+	}
+	else pack_info[sn] = PACK_COMPLETED;
+
+
+   return (int32_t)pack_len;
+}
+
+
+int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t port)
+{
+	uint8_t tmp = 0;
+	uint16_t freesize = 0;
+	uint32_t taddr;
+
+	switch(getSn_MR(sn) & 0x0F)
+	{
+	  case Sn_MR_UDP:
+	  //case Sn_MR_MACRAW:
+	  //case Sn_MR_IPRAW:
+		 break;
+	  default:
+		 return SOCKERR_SOCKMODE; //ERROR
+	}
+
+	taddr = ((uint32_t)addr[0]) & 0x000000FF;
+	taddr = (taddr << 8) + ((uint32_t)addr[1] & 0x000000FF);
+	taddr = (taddr << 8) + ((uint32_t)addr[2] & 0x000000FF);
+	taddr = (taddr << 8) + ((uint32_t)addr[3] & 0x000000FF); //taddr = addr[0] addr[1] addr[2] addr[3]
+
+	//if((taddr == 0) && ((getSn_MR(sn)&Sn_MR_MACRAW) != Sn_MR_MACRAW)) return SOCKERR_IPINVALID;
+	//if((port  == 0) && ((getSn_MR(sn)&Sn_MR_MACRAW) != Sn_MR_MACRAW)) return SOCKERR_PORTZERO;
+	tmp = getSn_SR(sn);
+	if((tmp != SOCK_MACRAW) && (tmp != SOCK_UDP) && (tmp != SOCK_IPRAW)) return SOCKERR_SOCKSTATUS;
+
+	setSn_DIPR(sn,addr);
+	setSn_DPORT(sn,port);
+
+	freesize = getSn_TxMAX(sn);
+	if (len > freesize) len = freesize; // check size not to exceed MAX size.
+
+	while(1)
+	{
+	  freesize = getSn_TX_FSR(sn);
+	  if(getSn_SR(sn) == SOCK_CLOSED) return SOCKERR_SOCKCLOSED;
+	  if(len <= freesize) break;
+	};
+
+	send_data_processing(sn, buf, len);
+
+	setSn_CR(sn,Sn_CR_SEND);
+	/* wait to process the command... */
+	while(getSn_CR(sn));
+
+	while(1)
+	{
+	  tmp = getSn_IR(sn);
+	  if(tmp & Sn_IR_SEND_OK)
+	  {
+		 setSn_IR(sn, Sn_IR_SEND_OK);
+		 break;
+	  }
+
+	  else if(tmp & Sn_IR_TIMEOUT)
+	  {
+		 setSn_IR(sn, Sn_IR_TIMEOUT);
+
+		 return SOCKERR_TIMEOUT;
+	  }
+	}
+
+	return (int32_t)len;
+}
+
+
+
 void Socket_Trace(char* tag, uint8_t s)
 {
 	char str[32] = {0};
@@ -109,33 +260,24 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag)
       )
    {
       close(s);
-      while(!(IINCHIP_READ(Sn_MR(s)) & (protocol|flag) ))
-      {
-		  IINCHIP_WRITE(Sn_MR(s) ,protocol | flag);
-		  HAL_IWDG_Refresh(&hiwdg);
-      }
+
+      setSn_MR(s ,(protocol | flag));
+      //IINCHIP_WRITE(Sn_MR(s) ,protocol | flag);
 
       if (port != 0) {
-         IINCHIP_WRITE( Sn_PORT0(s) ,(uint8_t)((port & 0xff00) >> 8));
-         IINCHIP_WRITE( Sn_PORT1(s) ,(uint8_t)(port & 0x00ff));
+    	  setSn_PORT(s, port);
       } else {
          local_port++; // if don't set the source port, set local_port number.
-         IINCHIP_WRITE(Sn_PORT0(s) ,(uint8_t)((local_port & 0xff00) >> 8));
-         IINCHIP_WRITE(Sn_PORT1(s) ,(uint8_t)(local_port & 0x00ff));
+         setSn_PORT(s, local_port);
       }
 
-      //while(getSn_SR(s)!=SOCK_INIT){
-		  IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_OPEN); // run sockinit Sn_CR
-		  //T("Opening socket...");
-		  /* wait to process the command... */
-		  while( IINCHIP_READ(Sn_CR(s)) );
-		  /* ------- */
-		  //while(!(getSn_IR(s) & Sn_IR_SEND_OK))
-		//	  HAL_IWDG_Refresh(&hiwdg);
-		 // IINCHIP_WRITE(Sn_IR(s) , Sn_IR_SEND_OK);
-		  //HAL_IWDG_Refresh(&hiwdg);
-		  //T("Again...");
-      //}
+      setSn_CR(s, Sn_CR_OPEN);
+	  while(getSn_CR(s));
+
+	  io_mode =0;
+	  is_sending &= ~(1<<s);
+	  remained_size[s] = 0;
+	  pack_info[s] = 0;
       ret = 1;
    }
    else
@@ -143,6 +285,7 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag)
       ret = 0;
    }
    return ret;
+
 }
 
 

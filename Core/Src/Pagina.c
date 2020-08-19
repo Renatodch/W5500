@@ -19,8 +19,8 @@ void Pages_User(void)
 {
 	char str[256] = {0};
 	char ip[20] = {0};
-	char state[5][20]={"Disabled","Disabled","Disabled","Disabled","Disabled"};
-	char i;
+	//char state[5][20]={"Disabled","Disabled","Disabled","Disabled","Disabled"};
+	//char i;
 	uint16_t j=0;
 
 	T("\r\nSend Usuario Page.............................................");

@@ -50,15 +50,18 @@ extern "C" {
 #include "stdarg.h"
 #include "stdio.h"
 
+
+/********Includes del CLib *****************/
+#include "Timer.h"
+#include "Str.h"
+
 /**** Includes principales *************/
 #include "spi1.h"
 #include "w5500.h"
 #include "socket.h"
-
-/********Includes del CLib *****************/
-#include "Timer.h"
-#include "Uint32.h"
-#include "Str.h"
+#include "DNS_Client.h"
+#include "DHCP_Client.h"
+#include "Bytes.h" // fue modificado, es Parte del CLib.
 
 /********Includes de Referencia*************/
 #include "Test.h"
@@ -90,6 +93,7 @@ void Error_Handler(void);
 extern SPI_HandleTypeDef hspi1;
 extern IWDG_HandleTypeDef hiwdg;
 
+extern DnsConnection dnsc;
 extern TcpClient	devtcc;
 extern ServerConnection websc;
 extern WebServer webServer;

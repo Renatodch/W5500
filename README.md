@@ -20,18 +20,28 @@ types.h
 ### Ejemplo con multiples sockets:  
 -1er socket TCP_Client: echo response via eeprom  
 -2do socket TCP_Server: Http com, parsear datos enviados desde mi pc. Transferir file.txt    
--3er socket DNS_Client: ---  
+-3er socket DNS_Client: Obtiene la direccion de un nombre de dominio. ej: www.google.com. Un solo método hace el trabajo (T.Max = 2s aprox). No máquina de estados  
+						(con protocolo UDP)   
 -4to socket DHCP  
 
 ## Requerimientos  
 1. Funcion para Inicializar: reset el W5500 (OK)
-2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible [DNS client, DHCP]) (Falta)  
+2. Funciones para configurar el W5500 (ip, puerto, ping, todo lo que este disponible [DNS client, DHCP client]) (Falta DHCP)  
 3. Funcion para servidor web para poder configurar la tarjeta. (Falta)
 4. Funcion socket para enviar y recibir datos: leer un dato que llega por el socket y grabarlo en memoria, leer desde memoria y enviarlo por el socket. (OK)  
 5. Manejo de multiples socket. (OK)    
 6. Funcion para recibir un archivo .txt desde una PC-cliente. (Falta)       
 
 ## Descripción
+
+### DHCP_Client
+-Funciones para manejar el DHCP_Client.
+
+### DNS_Client
+-Funciones para manejar el DNS_Client.
+
+Comentarios:
+-CLib: Se agregaron 2 metodos a Bytes y Uint32 ya no existe. Bytes.c contiene lo de Uint32.c
 
 ### w5500 (Descripción en W5500.h)
 -Funciones generales del chip  
@@ -43,6 +53,7 @@ Comentarios:
 -chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK    
 -Falta metodo para configurar el ping block mode (bloquea respuesta a un ping request)  
 -Types.h ya no existe. Se estandarizó al tipo de dato que maneja hal y algunas de definiciones en W5500.h  
+-Agregado uint8_t checkPhyLink(void): Checkea estado de la capa fisica, cable ethernet conectado: 1 else 0
 
 ### socket    
 

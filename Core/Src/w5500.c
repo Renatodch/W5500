@@ -8,7 +8,7 @@
 
 #include "main.h"
 
-
+/*########################################################### SPI1 Interface ##################################################*/
 void IINCHIP_WRITE( uint32_t addrbsb,  uint8_t data)
 {
 	uint8_t cmd[4] = {0};
@@ -92,11 +92,9 @@ uint16_t wiz_read_buf(uint32_t addrbsb, uint8_t* buf,uint16_t len)
 
   return len;
 }
-/*###############################################################################################################*/
 
 
-
-
+/*##################################################### FUNCIONES GENERALES DEL CHIP##########################################################*/
 
 void W5500_Reset(void){
 	HAL_Delay(100);
@@ -116,6 +114,20 @@ void W5500_ResetSoftware(void){
 	//T("mr: %d",mr);
 }
 
+
+
+/**********************************************
+ * Shared Buffer Definition for LOOPBACK TEST *
+ **********************************************/
+#define DATA_BUF_SIZE   2048
+uint8_t gDATABUF[DATA_BUF_SIZE];
+
+
+static int8_t checkPhyLink(void)
+{
+   return(getPHYCFGR() & 1); //0: Link off 1: Link on
+}
+
 void W5500_Init(void)
 {
 	uint8_t tmp_array[8]={0};
@@ -125,6 +137,9 @@ void W5500_Init(void)
 	W5500_Reset();
 	T("W5500_ResetSoftware();");
 	W5500_ResetSoftware();
+
+    /* PHY link status check */
+	while(!checkPhyLink());
 
     // MAC ADDRESS
     for (i = 0 ; i < 6; i++) Config_Msg.Mac[i] = MAC[i];
@@ -183,11 +198,7 @@ void W5500_Init(void)
 }
 
 
-#ifdef __DEF_IINCHIP_PPP__
-   #include "md5.h"
-#endif
-
-static uint8_t I_STATUS[MAX_SOCK_NUM];
+static uint8_t I_STATUS[MAX_SOCK_NUM]; //interrupt state?
 static uint16_t SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
 static uint16_t RSIZE[MAX_SOCK_NUM]; /**< Max Rx buffer size by each channel */
 
@@ -209,17 +220,12 @@ uint16_t getIINCHIP_TxMAX(uint8_t s)
    return SSIZE[s];
 }
 
-
-
 /**
 @brief  This function is for resetting of the iinchip. Initializes the iinchip to work in whether DIRECT or INDIRECT mode
 */
 void iinchip_init(void)
 {
   setMR( MR_RST );
-#ifdef __DEF_IINCHIP_DBG__
-  printf("MR value is %02x \r\n",IINCHIP_READ_COMMON(MR));
-#endif
 }
 
 /**
@@ -244,84 +250,90 @@ other 2 channels couldn't be used, for there's no available memory.\n
 */
 void sysinit( uint8_t * tx_size, uint8_t * rx_size  )
 {
-  int i;
-  int ssum,rsum;
-#ifdef __DEF_IINCHIP_DBG__
-  printf("sysinit()\r\n");
-#endif
-  ssum = 0;
-  rsum = 0;
-
-  for (i = 0 ; i < MAX_SOCK_NUM; i++)       // Set the size, masking and base address of Tx & Rx memory by each channel
-  {
-          IINCHIP_WRITE( (Sn_TXMEM_SIZE(i)), tx_size[i]);
-          IINCHIP_WRITE( (Sn_RXMEM_SIZE(i)), rx_size[i]);
-
-#ifdef __DEF_IINCHIP_DBG__
-         printf("tx_size[%d]: %d, Sn_TXMEM_SIZE = %d\r\n",i, tx_size[i], IINCHIP_READ(Sn_TXMEM_SIZE(i)));
-         printf("rx_size[%d]: %d, Sn_RXMEM_SIZE = %d\r\n",i, rx_size[i], IINCHIP_READ(Sn_RXMEM_SIZE(i)));
-#endif
-    SSIZE[i] = (int)(0);
-    RSIZE[i] = (int)(0);
+	int i;
+	int ssum,rsum;
 
 
-    if (ssum <= 16384)
-    {
-         switch( tx_size[i] )
-      {
-      case 1:
-        SSIZE[i] = (int)(1024);
-        break;
-      case 2:
-        SSIZE[i] = (int)(2048);
-        break;
-      case 4:
-        SSIZE[i] = (int)(4096);
-        break;
-      case 8:
-        SSIZE[i] = (int)(8192);
-        break;
-      case 16:
-        SSIZE[i] = (int)(16384);
-      break;
-      default :
-        RSIZE[i] = (int)(2048);
-        break;
-      }
-    }
+	ssum = 0;
+	rsum = 0;
 
-   if (rsum <= 16384)
-    {
-         switch( rx_size[i] )
-      {
-      case 1:
-        RSIZE[i] = (int)(1024);
-        break;
-      case 2:
-        RSIZE[i] = (int)(2048);
-        break;
-      case 4:
-        RSIZE[i] = (int)(4096);
-        break;
-      case 8:
-        RSIZE[i] = (int)(8192);
-        break;
-      case 16:
-        RSIZE[i] = (int)(16384);
-        break;
-      default :
-        RSIZE[i] = (int)(2048);
-        break;
-      }
-    }
-    ssum += SSIZE[i];
-    rsum += RSIZE[i];
+	for (i = 0 ; i < MAX_SOCK_NUM; i++)       // Set the size, masking and base address of Tx & Rx memory by each channel
+	{
+		IINCHIP_WRITE( (Sn_TXMEM_SIZE(i)), tx_size[i]);
+		IINCHIP_WRITE( (Sn_RXMEM_SIZE(i)), rx_size[i]);
 
-  }
+		T("tx_size[%d]: %d, Sn_TXMEM_SIZE = %d\r\n",i, tx_size[i], IINCHIP_READ(Sn_TXMEM_SIZE(i)));
+		T("rx_size[%d]: %d, Sn_RXMEM_SIZE = %d\r\n",i, rx_size[i], IINCHIP_READ(Sn_RXMEM_SIZE(i)));
+
+		SSIZE[i] = (int)(0);
+		RSIZE[i] = (int)(0);
+
+		if (ssum <= 16384)
+		{
+		  switch( tx_size[i] )
+		  {
+		  case 1:
+			SSIZE[i] = (int)(1024);
+			break;
+		  case 2:
+			SSIZE[i] = (int)(2048);
+			break;
+		  case 4:
+			SSIZE[i] = (int)(4096);
+			break;
+		  case 8:
+			SSIZE[i] = (int)(8192);
+			break;
+		  case 16:
+			SSIZE[i] = (int)(16384);
+		  break;
+		  default :
+			RSIZE[i] = (int)(2048);
+			break;
+		  }
+		}
+
+	   if (rsum <= 16384)
+		{
+			switch( rx_size[i] )
+		  {
+		  case 1:
+			RSIZE[i] = (int)(1024);
+			break;
+		  case 2:
+			RSIZE[i] = (int)(2048);
+			break;
+		  case 4:
+			RSIZE[i] = (int)(4096);
+			break;
+		  case 8:
+			RSIZE[i] = (int)(8192);
+			break;
+		  case 16:
+			RSIZE[i] = (int)(16384);
+			break;
+		  default :
+			RSIZE[i] = (int)(2048);
+			break;
+		  }
+		}
+		ssum += SSIZE[i];
+		rsum += RSIZE[i];
+
+	  }
 }
 
 
-/*###################################### SETTERS ############################################*/
+/**
+@brief  This function set the interrupt mask Enable/Disable appropriate Interrupt. ('1' : interrupt enable)
+*/
+void clearIR(uint8_t mask)
+{
+  IINCHIP_WRITE(IR, ~mask | getIR() ); // must be setted 0x10.
+}
+
+
+/**************************************** SETTERS ******************************************/
 
 //set gateway addr
 void setGAR(uint8_t * addr ) /**< a pointer to a 4 -byte array responsible to set the Gateway IP address. */
@@ -337,7 +349,6 @@ void setSUBR(uint8_t * addr)
 
 //set mac addr
 void setSHAR(uint8_t * addr)  /**< a pointer to a 6 -byte array responsible to set the MAC address. */
-
 {
   wiz_write_buf(SHAR0, addr, 6);
 }
@@ -353,6 +364,24 @@ void setMR(uint8_t val)
 {
   IINCHIP_WRITE(MR,val);
 }
+/**
+@brief  This function sets up Retransmission time.
+*/
+void setRTR(uint16_t timeout)
+{
+  IINCHIP_WRITE(RTR0,(uint8_t)((timeout & 0xff00) >> 8));
+  IINCHIP_WRITE(RTR1,(uint8_t)(timeout & 0x00ff));
+}
+
+/**
+@brief  This function set the number of Retransmission.
+*/
+void setRCR(uint8_t retry)
+{
+  IINCHIP_WRITE(RCR,retry);
+}
+
+
 
 /************************************ GETTERS ***********************************/
 //get gateway addr
@@ -387,40 +416,11 @@ uint8_t getIR( void )
    return IINCHIP_READ(IR);
 }
 
-/**
-@brief  This function sets up Retransmission time.
-
-If there is no response from the peer or delay in response then retransmission
-will be there as per RTR (Retry Time-value Register)setting
-*/
-void setRTR(uint16_t timeout)
-{
-  IINCHIP_WRITE(RTR0,(uint8_t)((timeout & 0xff00) >> 8));
-  IINCHIP_WRITE(RTR1,(uint8_t)(timeout & 0x00ff));
+uint8_t getPHYCFGR( void ){
+	return IINCHIP_READ(PHYCFGR);
 }
 
-/**
-@brief  This function set the number of Retransmission.
-
-If there is no response from the peer or delay in response then recorded time
-as per RTR & RCR register setting then time out will occur.
-*/
-void setRCR(uint8_t retry)
-{
-  IINCHIP_WRITE(RCR,retry);
-}
-
-/**
-@brief  This function set the interrupt mask Enable/Disable appropriate Interrupt. ('1' : interrupt enable)
-
-If any bit in IMR is set as '0' then there is not interrupt signal though the bit is
-set in IR register.
-*/
-void clearIR(uint8_t mask)
-{
-  IINCHIP_WRITE(IR, ~mask | getIR() ); // must be setted 0x10.
-}
-
+/*################################################################### Sockets interface #####################################################*/
 /**
 @brief  This sets the maximum segment size of TCP in Active Mode), while in Passive Mode this is set by peer
 */
@@ -434,8 +434,58 @@ void setSn_TTL(SOCKET s, uint8_t ttl)
 {
    IINCHIP_WRITE( Sn_TTL(s) , ttl);
 }
+void setSn_CR(SOCKET sn, uint8_t cr){
+		IINCHIP_WRITE(Sn_CR(sn), cr);
+}
+//dest ip
+void setSn_DIPR(SOCKET sn, uint8_t * dipr){
+	wiz_write_buf((uint32_t)Sn_DIPR(sn), dipr, 4);
+}
+//dest port
+void setSn_DPORT(SOCKET sn, uint16_t dport) {
+	IINCHIP_WRITE(Sn_DPORT(sn),   (uint8_t) (dport>>8));
+	IINCHIP_WRITE(WIZCHIP_OFFSET_INC(Sn_DPORT(sn),1), (uint8_t)  dport);
+}
+void setSn_IR(SOCKET sn, uint8_t ir){
+	IINCHIP_WRITE(Sn_IR(sn), (ir & 0x1F));
+}
+void setSn_RX_RD(SOCKET sn, uint8_t rxrd) {
+	IINCHIP_WRITE(Sn_RX_RD(sn),   (uint8_t)(rxrd>>8));
+	IINCHIP_WRITE(WIZCHIP_OFFSET_INC(Sn_RX_RD(sn),1), (uint8_t) rxrd);
+}
+//mode
+void setSn_MR(SOCKET sn, uint8_t mr){
+	IINCHIP_WRITE(Sn_MR(sn),mr);
+}
+//port
+void setSn_PORT(SOCKET sn, uint16_t port){
+	IINCHIP_WRITE( Sn_PORT0(sn) ,(uint8_t)((port & 0xff00) >> 8));
+	IINCHIP_WRITE( Sn_PORT1(sn) ,(uint8_t)(port & 0x00ff));
+}
 
+/*********** GETTERS******/
+uint8_t getSn_TXBUF_SIZE(SOCKET sn){
+	return IINCHIP_READ(Sn_TXBUF_SIZE(sn));
+}
+uint16_t getSn_TxMAX(SOCKET sn){
+	return (getSn_TXBUF_SIZE(sn) <<10);
+}
 
+uint8_t getSn_CR(SOCKET sn){
+	return IINCHIP_READ(Sn_CR(sn));
+}
+
+uint8_t getSn_RX_RD(SOCKET sn){
+	return (IINCHIP_READ((Sn_RX_RD(sn)) << 8) + IINCHIP_READ(WIZCHIP_OFFSET_INC(Sn_RX_RD(sn),1)));
+}
+uint8_t getSn_MR(SOCKET sn){
+	return IINCHIP_READ(Sn_MR(sn));
+}
+/*
+void getSn_TxMAX(sn){
+	(getSn_TXBUF_SIZE(sn) << 10);
+}
+*/
 
 //socket interrupt status
 uint8_t getSn_IR(SOCKET s)
@@ -463,7 +513,7 @@ uint16_t getSn_TX_FSR(SOCKET s)
   {
     val1 = IINCHIP_READ(Sn_TX_FSR0(s));
     val1 = (val1 << 8) + IINCHIP_READ(Sn_TX_FSR1(s));
-      if (val1 != 0)
+    if (val1 != 0)
     {
         val = IINCHIP_READ(Sn_TX_FSR0(s));
         val = (val << 8) + IINCHIP_READ(Sn_TX_FSR1(s));
@@ -512,7 +562,6 @@ void send_data_processing(SOCKET s, uint8_t *data, uint16_t len)
     return;
   }
 
-
   ptr = IINCHIP_READ( Sn_TX_WR0(s) );
   ptr = ((ptr & 0x00ff) << 8) + IINCHIP_READ(Sn_TX_WR1(s));
 
@@ -554,6 +603,13 @@ void recv_data_processing(SOCKET s, uint8_t *data, uint16_t len)
   IINCHIP_WRITE( Sn_RX_RD1(s), (uint8_t)(ptr & 0x00ff));
 }
 
-
+/*This function is for ignore received packets*/
+void recv_data_ignore(uint8_t sn, uint16_t len)
+{
+   uint16_t ptr = 0;
+   ptr = getSn_RX_RD(sn);
+   ptr += len;
+   setSn_RX_RD(sn,ptr);
+}
 
 

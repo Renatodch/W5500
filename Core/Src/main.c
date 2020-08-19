@@ -53,6 +53,8 @@ TIM_HandleTypeDef htim4;
 char w5500Buf[64];
 Timer Led;
 Timer net;
+
+DnsConnection dnsc;
 TcpClient	devtcc;
 ServerConnection websc;
 WebServer webServer;
@@ -127,25 +129,32 @@ int main(void)
 
   T("Iniciando...");
 
-  Timer_Init(&Led, 2000);
+  Timer_Init(&Led, 3000);
   Timer_Start(&Led);
   HAL_GPIO_WritePin(GPIOB, Buzzer_Pin, GPIO_PIN_SET); //Apagar buzzer ?
 
   /*1. Inicia W5500 y caracteristicas de la red*/
-
-
   W5500_Init();
-  Timer_Init(&net, 3000);
 
+  /*2. Inicial Cliente DNS UDP*/
+  DNS_init(&dnsc,0,"www.twitter.com",DNS_MSG_ID,DNS_Server_1, DNS_Server_2); //socket 0
+  Timer_Init(&net, 3000);
+  Timer_Start(&net);
+
+  /*3. Inicia Cliente TCP*/
   TcpClientConn_Init(&devtcc, SOCKET_1TCP, IpServer, PortServer, Client_Receiver_EventHandler, Client_onConnection_EventHandler);
 
+  /*4. Inicia Servidor TCO*/
   ServerConnection_Init(&websc, SOCKET_2TCP, 80, WebServer_ListenEventHandler);
 
+  /*5. Inicial FSM de Paginas Web*/
   WebServer_Init();
 
-  Socket_Trace("Cliente 1er",devtcc.socket);
-  Socket_Trace("Web Server 2do",websc.socket);
-
+  T("\r\n");
+  Socket_Trace("Status DNS Client 0:",dnsc.socket);
+  Socket_Trace("Status TCP Client 1:",devtcc.socket);
+  Socket_Trace("Status Web Server 2:",websc.socket);
+  T("\r\n");
 
   /* USER CODE END 2 */
 
@@ -153,16 +162,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //Pulso de vida
 	  if(Timer_Elapsed(&Led)){
-		  Socket_Trace("Cliente 1er",devtcc.socket);
-		  Socket_Trace("Web Server 2do",websc.socket);
+		  T("\n");
+		  Socket_Trace("Status DNS Client 0:",dnsc.socket);
+		  Socket_Trace("Status TCP Client 1:",devtcc.socket);
+		  Socket_Trace("Status Web Server 2:",websc.socket);
+		  T("\n");
 
 		  LED_PLC_GPIO_Port->ODR ^=LED_PLC_Pin;
 		  LED_CPU_GPIO_Port->ODR ^=LED_CPU_Pin;
 		  Timer_Start(&Led);
 	  }
-
+	  if(Timer_Elapsed(&net)){
+		  DnsClient_Lookup(&dnsc);
+	  }
 
     /* USER CODE END WHILE */
 
