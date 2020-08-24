@@ -33,11 +33,11 @@ Pagina: Paginas Web
 /*****************************************/    
 
 ## Ejemplo con multiples sockets:
--W5500_Init: Configura el chip.
--3er socket UDP DHCP_Client: Reestablece algunas características de la red  
--1er socket TCP_Client: echo response via eeprom  
--2do socket TCP_Server: Http WebServer, recibir datos desde mi pc. obtiene file.txt    
--0zt socket UDP DNS_Client: Obtiene la direccion de un nombre de dominio. ej: www.google.com. Un solo método hace el trabajo (T.Max = 2s aprox). Sin máquina de estados   
+- W5500_Init: Configura el chip.
+- 3er socket UDP DHCP_Client: Reestablece algunas características de la red  
+- 1er socket TCP_Client: echo response via eeprom  
+- 2do socket TCP_Server: Http WebServer, recibir datos desde mi pc. obtiene file.txt    
+- 0zt socket UDP DNS_Client: Obtiene la direccion de un nombre de dominio. ej: www.google.com. Un solo método hace el trabajo (T.Max = 2s aprox). Sin máquina de estados   
 
 ## Requerimientos  
 1. Funcion para Inicializar: reset el W5500 (OK)
@@ -50,45 +50,45 @@ Pagina: Paginas Web
 ## Descripción de Componentes  
 
 ### DHCP_Client
--Funciones para manejar el DHCP_Client.
+- Funciones para manejar el DHCP_Client.
 
 ### DNS_Client
--Funciones para manejar el DNS_Client.
+- Funciones para manejar el DNS_Client.
 
 Comentarios:  
--CLib: Se agregaron 2 metodos a Bytes y Uint32 ya no existe. Bytes.c contiene lo de Uint32.c
+- CLib: Se agregaron 2 metodos a Bytes y Uint32 ya no existe. Bytes.c contiene lo de Uint32.c
 
 ### w5500
--Funciones generales del chip  
--Funciones interface con spi1  
--Funciones interface con socket  
+- Funciones generales del chip  
+- Funciones interface con spi1  
+- Funciones interface con socket  
 
 Comentarios:  
--Creado objeto W5500_Network: caracteristicas de red del w5500    
--ahora: void W5500_Init(W5500_Network * w5500_Network); antes void Net_Init(void)  
--chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK      
--Falta metodo para configurar el ping block mode (bloquea respuesta a un ping request)  
--Types.h ya no existe. Se estandarizó al tipo de dato que maneja hal y algunas de definiciones en W5500.h    
--Agregado uint8_t checkPhyLink(void): Checkea estado de la capa fisica, cable ethernet conectado: 1 else 0  
--Se agregaron algunos macros para lectura de direcciones del w5500.  
+- Creado objeto W5500_Network: caracteristicas de red del w5500    
+- ahora: void W5500_Init(W5500_Network * w5500_Network); antes void Net_Init(void)  
+- chicknet originial Net_Init() es llamado al inicio y otra vez luego de 10s. Por ahora solo lo llamo una vez y todo va OK      
+- Falta metodo para configurar el ping block mode (bloquea respuesta a un ping request)  
+- Types.h ya no existe. Se estandarizó al tipo de dato que maneja hal y algunas de definiciones en W5500.h    
+- Agregado uint8_t checkPhyLink(void): Checkea estado de la capa fisica, cable ethernet conectado: 1 else 0  
+- Se agregaron algunos macros para lectura de direcciones del w5500.  
 
 ### socket    
--Funciones para usar los sockets del chip  
+- Funciones para usar los sockets del chip  
 Comentarios:  
--Se agregó función sendto: enviar datos con udp.  
--Se agregó dunción recvfrom: recibir datos con udp.    
+- Se agregó función sendto: enviar datos con udp.  
+- Se agregó dunción recvfrom: recibir datos con udp.    
 
 ### spi1     
--Funciones del spi1 + irq - Hal driver  
+- Funciones del spi1 + irq - Hal driver  
   
 ### TcpClientConn  
--Funciones para conxion tcp client.  
+- Funciones para conxion tcp client.  
 
 ### TcpServerConn  
--Funciones para conexion tcp server.  
+- Funciones para conexion tcp server.  
         
 ### WebServer   
--Funciones para servidor Web    
+- Funciones para servidor Web    
     
 ### Paginas
 - Paginas Web  
