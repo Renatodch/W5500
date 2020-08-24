@@ -67,8 +67,8 @@ typedef struct
 {
 		char					domainName[MAX_DOMAIN_NAME];
 		uint8_t					domainIp[4];
-		uint8_t					ip2[4];
-		uint8_t					ip1[4];
+		uint8_t					ip2[4]; //DNS server 1
+		uint8_t					ip1[4]; //DNS server 2
 		uint16_t				msgId;
 		uint8_t					buf[MAX_DNS_BUF_SIZE];
 		uint16_t				port;
@@ -80,6 +80,5 @@ typedef struct
 void DNS_init(DnsConnection *dns, SOCKET s, char * domainName ,uint16_t id, uint8_t * ip1, uint8_t * ip2);
 int8_t DNS_run(DnsConnection *dnsc, uint8_t * ipServer);
 void DnsClient_Lookup(DnsConnection * dnsc);
-
 
 #endif /* INC_DNS_CLIENT_H_ */

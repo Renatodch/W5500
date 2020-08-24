@@ -17,6 +17,7 @@ void Bytes_Print_ToHex(uint8_t *pBytes, uint32_t len);
 void Uint32_ToBytes(uint32_t value, uint8_t *srcBuf);
 uint32_t Uint32_Swap( uint32_t val );
 char UInt32_IsBetweenWindow(uint32_t newVal, uint32_t min, uint32_t max);
+char NibbleToHex(uint8_t nibble);
 
 	
 #ifdef __cplusplus

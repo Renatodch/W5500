@@ -238,7 +238,7 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	{
 		cp = dns_question(msg, cp);
 
-		T("MAX_DOMAIN_NAME is too small, it should be redfine in dns.h");
+		//T("MAX_DOMAIN_NAME is too small, it should be redfine in dns.h");
 
 		if(!cp) return -1;
 	}
@@ -248,7 +248,7 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	{
 		cp = dns_answer(msg, cp, ip_from_dns);
 
-		T("MAX_DOMAIN_NAME is too small, it should be redfine in dns.h");
+		//T("MAX_DOMAIN_NAME is too small, it should be redfine in dns.h");
 
 		if(!cp) return -1;
 	}

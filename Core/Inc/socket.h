@@ -32,7 +32,6 @@
 
 #define SOCKFATAL_PACKLEN     (SOCK_FATAL - 1)     ///< Invalid packet length. Fatal Error.
 
-
 /*
  * UDP & MACRAW Packet Infomation
  */
@@ -40,17 +39,25 @@
 #define PACK_REMAINED            0x01              ///< In Non-TCP packet, It indicates to remain a packet to be received.
 #define PACK_COMPLETED           0x00              ///< In Non-TCP packet, It indicates to complete to receive a packet.
 
+/*extern variables*/
+extern uint16_t any_port;
+extern uint16_t io_mode;
+extern uint16_t is_sending;
+extern uint16_t remained_size[MAX_SOCK_NUM];
+extern uint8_t  pack_info[MAX_SOCK_NUM];
 
-uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag); // Opens a socket(TCP or UDP or IP_RAW mode)
-void close(SOCKET s); // Close socket
-uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port); // Establish TCP connection (Active connection)
-void disconnect(SOCKET s); // disconnect the connection
-uint8_t listen(SOCKET s);	// Establish TCP connection (Passive connection)
-uint16_t send(SOCKET s, const uint8_t * buf, uint16_t len, bool retry); // Send data (TCP)
-uint16_t recv(SOCKET s, uint8_t * buf, uint16_t len);	// Receive data (TCP)
-int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t port);
-int32_t recvfrom(SOCKET s, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t  *port); // Receive data (UDP/IP RAW)
-char Socket_GetStatusToString(uint8_t socket, char *mt);
-void Socket_Trace(char* tag, uint8_t s);
+/*#######################################################################################################################################*/
+
+uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag); // Inicializa y abre un socket en modo TCP o UDP
+void close(SOCKET s); // Cierra el socket
+uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port); // Establece conexion TCP Activa
+void disconnect(SOCKET s); // Desconecta
+uint8_t listen(SOCKET s);	// Establece conexion TCP Pasiva
+uint16_t send(SOCKET s, const uint8_t * buf, uint16_t len, bool retry); // Envia datos en modo TCP
+uint16_t recv(SOCKET s, uint8_t * buf, uint16_t len);	// Recibe datos en modo TCP
+int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t port);// Envia datos en modo UDP
+int32_t recvfrom(SOCKET s, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t  *port); // Recibe datos en modo UDP
+char Socket_GetStatusToString(uint8_t socket, char *mt); //Obtiene el estado del socket en un mensaje
+void Socket_Trace(char* tag, uint8_t s); //Trace estado del socket
 
 #endif /* INC_SOCKET_H_ */

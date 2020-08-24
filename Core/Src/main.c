@@ -50,16 +50,23 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
-char w5500Buf[64];
 Timer Led;
 Timer net;
 
+DhcpConnection dhcpc;
 DnsConnection dnsc;
 TcpClient	devtcc;
 ServerConnection websc;
 WebServer webServer;
 
+/*For Applications*/
+uint8_t TX_BUF[TX_RX_MAX_BUF_SIZE]; // TX Buffer for applications
+uint8_t ch_status[MAX_SOCK_NUM] = { 0, }; /** 0:close, 1:ready, 2:connected */
+uint8_t IpServer[4] = {192,168,0,3}; //mi pc
+uint16_t Port = 8888;
 
+uint8_t DNS_Server_1[4] = {8,8,8,8};//1st DNS server
+uint8_t DNS_Server_2[4] = {168, 126, 63, 1};//Secondary server
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,6 +87,22 @@ static void MX_NVIC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+// NO HAL REQUIRED
+void T(char * format,...){
+	char msg[1024] = {0};
+	char *p = msg;
+	va_list args;
+	va_start(args,format);
+
+	vsnprintf(msg, sizeof(msg), format, args);
+	strcat(msg,"\r\n");
+	while(*p){
+
+		USART1->DR = (uint32_t)*(p++);
+		while(!(USART1->SR & USART_SR_TC));
+	}
+	va_end(args);
+}
 
 /* USER CODE END 0 */
 
@@ -127,6 +150,11 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
+  for(int i; i<5 ; i++){
+	  HAL_GPIO_TogglePin(LED_CPU_GPIO_Port, LED_CPU_Pin);
+	  HAL_Delay(100);
+  }
+
   T("Iniciando...");
 
   Timer_Init(&Led, 3000);
@@ -134,45 +162,44 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, Buzzer_Pin, GPIO_PIN_SET); //Apagar buzzer ?
 
   /*1. Inicia W5500 y caracteristicas de la red*/
-  W5500_Init();
+  W5500_Init(&w5500_Network);
 
-  /*2. Inicial Cliente DNS UDP*/
-  DNS_init(&dnsc,0,"www.twitter.com",DNS_MSG_ID,DNS_Server_1, DNS_Server_2); //socket 0
-  Timer_Init(&net, 3000);
-  Timer_Start(&net);
-
-  /*3. Inicia Cliente TCP*/
-  TcpClientConn_Init(&devtcc, SOCKET_1TCP, IpServer, PortServer, Client_Receiver_EventHandler, Client_onConnection_EventHandler);
-
-  /*4. Inicia Servidor TCO*/
-  ServerConnection_Init(&websc, SOCKET_2TCP, 80, WebServer_ListenEventHandler);
-
-  /*5. Inicial FSM de Paginas Web*/
+  /*2. Inicial FSM de Paginas Web*/
   WebServer_Init();
 
-  T("\r\n");
-  Socket_Trace("Status DNS Client 0:",dnsc.socket);
-  Socket_Trace("Status TCP Client 1:",devtcc.socket);
-  Socket_Trace("Status Web Server 2:",websc.socket);
-  T("\r\n");
+  /*3. Iniciar DHCP Client*/
+  DHCP_init(&dhcpc, 3, ip_assign_callback, ip_conflict_callback);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  /*4. Espera assignación de Ip */
+  while(1)
+  {
+	  DhcpClient_Events(&dhcpc);
+
+	  if(dhcpc.ipDhcpFlag == DHCP_IP_LEASED){
+		  /*5. Inicia Cliente TCP*/
+		  TcpClientConn_Init(&devtcc, 1, IpServer, Port, Client_Receiver_EventHandler, Client_onConnection_EventHandler);
+		  /*6. Inicia Servidor TCP*/
+		  ServerConnection_Init(&websc, 2, 80, WebServer_ListenEventHandler);
+		  /*7. Inicial Cliente DNS UDP*/
+		  DNS_init(&dnsc,0,"www.globalgps.pe",DNS_MSG_ID,DNS_Server_1, DNS_Server_2);
+		  Timer_Init(&net, 3000);
+		  Timer_Start(&net);
+		  break;
+	  }
+  }
+
   while (1)
   {
 	  if(Timer_Elapsed(&Led)){
-		  T("\n");
-		  Socket_Trace("Status DNS Client 0:",dnsc.socket);
-		  Socket_Trace("Status TCP Client 1:",devtcc.socket);
-		  Socket_Trace("Status Web Server 2:",websc.socket);
-		  T("\n");
-
-		  LED_PLC_GPIO_Port->ODR ^=LED_PLC_Pin;
 		  LED_CPU_GPIO_Port->ODR ^=LED_CPU_Pin;
 		  Timer_Start(&Led);
 	  }
+
 	  if(Timer_Elapsed(&net)){
 		  DnsClient_Lookup(&dnsc);
 	  }
@@ -180,12 +207,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+	  DhcpClient_Events(&dhcpc);
 	  ServerConn_Events(&websc);
-
 	  TcpClientConn_Events(&devtcc, 50001);
-
-	  //WebServer_Events();
 
 	  HAL_IWDG_Refresh(&hiwdg);
   }

@@ -62,9 +62,11 @@ extern "C" {
 #include "DNS_Client.h"
 #include "DHCP_Client.h"
 #include "Bytes.h" // fue modificado, es Parte del CLib.
+#include "WebServer.h"
+#include "TcpClientConn.h"
+#include "TcpServerConn.h"
 
 /********Includes de Referencia*************/
-#include "Test.h"
 #include "eeprom.h"
 #include "Pagina.h"
 /*****************************************/
@@ -88,15 +90,31 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
+void T(char * format,...);
 
 /* USER CODE BEGIN EFP */
+#define TX_RX_MAX_BUF_SIZE	4096//2048
+
+
 extern SPI_HandleTypeDef hspi1;
 extern IWDG_HandleTypeDef hiwdg;
 
+
+extern DhcpConnection dhcpc;
 extern DnsConnection dnsc;
 extern TcpClient	devtcc;
 extern ServerConnection websc;
 extern WebServer webServer;
+
+extern uint8_t TX_BUF[TX_RX_MAX_BUF_SIZE];
+extern uint8_t IpServer[4]; //mi pc
+extern uint16_t Port;
+extern uint8_t ch_status[MAX_SOCK_NUM];
+
+extern uint8_t DNS_Server_1[4];//1st DNS server
+extern uint8_t DNS_Server_2[4];//Secondary server
+
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

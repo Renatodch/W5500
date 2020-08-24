@@ -14,11 +14,11 @@
 #define	MAX_SOCK_NUM		8	/**< Maxmium number of socket */
 typedef uint8_t 			SOCKET;
 
-#define WIZCHIP_OFFSET_INC(ADDR, N)    (ADDR + (N<<8))
-#define WIZCHIP_CREG_BLOCK          0x00 	//< Common register block
-#define WIZCHIP_SREG_BLOCK(N)       (1+4*N) //< Socket N register block
-#define WIZCHIP_TXBUF_BLOCK(N)      (2+4*N) //< Socket N Tx buffer address block
-#define WIZCHIP_RXBUF_BLOCK(N)      (3+4*N) //< Socket N Rx buffer address block
+#define WIZCHIP_OFFSET_INC(ADDR, N)    	(ADDR + (N<<8))
+#define WIZCHIP_CREG_BLOCK          	0x00 	//< Common register block
+#define WIZCHIP_SREG_BLOCK(N)       	(1+4*N) //< Socket N register block
+#define WIZCHIP_TXBUF_BLOCK(N)      	(2+4*N) //< Socket N Tx buffer address block
+#define WIZCHIP_RXBUF_BLOCK(N)      	(3+4*N) //< Socket N Rx buffer address block
 /**
  @brief Mode Register address
  * W5500 SPI Frame consists of 16bits Offset Address in Address Phase,
@@ -265,12 +265,32 @@ typedef uint8_t 			SOCKET;
 #define Sn_RX_WR1(ch)                   (0x002B08 + (ch<<5))
 
 
-//Nuevos
-#define Sn_RX_RD(ch)        			((0x0028 << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
-#define Sn_DIPR(ch)        				((0x000C << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
-#define Sn_DPORT(ch)        			((0x0010 << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
-#define Sn_TXBUF_SIZE(ch)   			((0x001F << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
-#define Sn_PORT(ch)         				((0x0004 << 8) + (WIZCHIP_SREG_BLOCK(ch) << 3))
+/************************* rdch 18/08/2020 *************************************/
+/**
+ @brief Read point of Receive memory
+ */
+#define Sn_RX_RD(ch)        			(0x002808 + (ch<<5))
+
+/**
+ @brief Peer IP register address
+ */
+#define Sn_DIPR(ch)        				(0x000C08 + (ch<<5))
+
+/**
+ @brief Peer port register address
+ */
+#define Sn_DPORT(ch)        			(0x001008 + (ch<<5))
+
+/**
+ @brief Transmit memory size reigster
+ */
+#define Sn_TXBUF_SIZE(ch)   			(0x001F08 + (ch<<5))
+
+/**
+ @brief Source port register address
+ */
+#define Sn_PORT(ch)         			(0x000408 + (ch<<5))
+/*******************************************************************************/
 
 /**
  @brief socket interrupt mask register
@@ -318,7 +338,6 @@ typedef uint8_t 			SOCKET;
 //#define Sn_MR_BCASTB                 0x40     /**< Broadcast blcok */
 #define Sn_MR_MFEN                   0x80     /**< support MAC filter enable */
 
-
 /* Sn_CR values */
 #define Sn_CR_OPEN                   0x01     /**< initialize or open socket */
 #define Sn_CR_LISTEN                 0x02     /**< wait connection request in tcp mode(ServerConnection mode) */
@@ -330,20 +349,6 @@ typedef uint8_t 			SOCKET;
 #define Sn_CR_SEND_KEEP              0x22     /**<  send keep alive message */
 #define Sn_CR_RECV                   0x40     /**< update rxbuf pointer, recv data */
 
-#ifdef __DEF_IINCHIP_PPP__
-   #define Sn_CR_PCON                0x23
-   #define Sn_CR_PDISCON             0x24
-   #define Sn_CR_PCR                 0x25
-   #define Sn_CR_PCN                 0x26
-   #define Sn_CR_PCJ                 0x27
-#endif
-
-/* Sn_IR values */
-#ifdef __DEF_IINCHIP_PPP__
-   #define Sn_IR_PRECV               0x80
-   #define Sn_IR_PFAIL               0x40
-   #define Sn_IR_PNEXT               0x20
-#endif
 
 #define Sn_IR_SEND_OK                0x10     /**< complete sending */
 #define Sn_IR_TIMEOUT                0x08     /**< assert timeout */
@@ -381,6 +386,24 @@ typedef uint8_t 			SOCKET;
 #define IPPROTO_RAW                  255      /**< Raw IP packet */
 
 
+typedef struct
+{
+	uint8_t		Mac[6];
+	uint8_t 	IpDevice[4];
+	uint8_t 	Sub[4];
+	uint8_t 	Gw[4];
+	uint8_t 	DNS_1[4];
+	uint8_t  	DHCP;
+	//TX MEM SIZE- SOCKET 0-7:4KB
+	//RX MEM SIZE- SOCKET 0-7:4KB
+	uint8_t 	txsize[MAX_SOCK_NUM];
+	uint8_t 	rxsize[MAX_SOCK_NUM];
+}
+W5500_Network;
+
+extern W5500_Network w5500_Network;
+
+
 /*############################# INTERFACE CON SPI #############################################################*/
 void IINCHIP_WRITE( uint32_t addrbsb,  uint8_t data);
 uint8_t IINCHIP_READ(uint32_t addrbsb);
@@ -391,6 +414,7 @@ uint16_t wiz_read_buf(uint32_t addrbsb, uint8_t* buf,uint16_t len);
 void send_data_processing(SOCKET s, uint8_t *wizdata, uint16_t len);
 void recv_data_processing(SOCKET s, uint8_t *wizdata, uint16_t len);
 void recv_data_ignore(uint8_t sn, uint16_t len);
+
 /*Setters*/
 void setSn_TTL(SOCKET s, uint8_t ttl);
 void setSn_MSS(SOCKET s, uint16_t Sn_MSSR); // set maximum segment size
@@ -403,39 +427,41 @@ void setSn_MR(SOCKET sn, uint8_t mr);
 void setSn_PORT(SOCKET sn, uint16_t port);
 
 /*Getters*/
-uint8_t getSn_IR(SOCKET s); // interrupt status
+uint16_t getSn_DPORT(SOCKET sn);
+void getSn_DIPR(SOCKET sn, uint8_t * dipr);
+uint8_t getSn_IR(SOCKET s); // IRQ status
 uint8_t getSn_SR(SOCKET s); // status
 uint16_t getSn_TX_FSR(SOCKET s); // TX free buf size
 uint16_t getSn_RX_RSR(SOCKET s); // RX recv buf size
 uint8_t getSn_CR(SOCKET sn); //control
 uint8_t getSn_MR(SOCKET sn); //mode
-uint8_t getSn_RX_RD(SOCKET sn); //rx pointer
+uint16_t getSn_RX_RD(SOCKET sn); //rx pointer
 uint8_t getSn_TXBUF_SIZE(SOCKET sn);
-uint16_t getSn_TxMAX(SOCKET sn);
+uint16_t getSn_TxMAX(SOCKET sn);//lo mismo que getIINCHIP_TxMAX
 
 /*######################### FUNCIONES GENERALES DEL CHIP#####################################################*/
-void iinchip_init(void); // reset iinchip
 void sysinit(uint8_t * tx_size, uint8_t * rx_size); // setting tx/rx buf size
-void W5500_Init(void);
-void W5500_Reset(void);
-void W5500_ResetSoftware(void);
-
-void clearIR(uint8_t mask); // clear interrupt
-void putISR(uint8_t s, uint8_t val);
-uint8_t getISR(uint8_t s);
+void W5500_Init(W5500_Network * w5500_Network); //Inicia características de la red
+void W5500_Reset(void); //hw reset
+void W5500_ResetSoftware(void); //sw reset
+int8_t checkPhyLink(void);//checkea estadto del PHY link (capa fisica cable conectado?)
+void clearIR(uint8_t mask); // clear IRQ
+void setISR(uint8_t s, uint8_t val); //set IRQ
+uint8_t getISR(uint8_t s); //get IRQ
 uint16_t getIINCHIP_RxMAX(uint8_t s);
-uint16_t getIINCHIP_TxMAX(uint8_t s);
+uint16_t getIINCHIP_TxMAX(uint8_t s); //los mismo que getSn_TxMAX
 
 /*Setters*/
-void setGAR(uint8_t * addr); //gateway address
-void setSUBR(uint8_t * addr); //subnet mask address
-void setSHAR(uint8_t * addr); //local MAC address
-void setSIPR(uint8_t * addr); //local IP address
-void setMR(uint8_t val);
-void setRTR(uint16_t timeout); // set retry duration for data transmission, connection, closing ...
-void setRCR(uint8_t retry); // set retry count (above the value, assert timeout interrupt)
+void setGAR(uint8_t * addr); //gateway
+void setSUBR(uint8_t * addr); //subnet
+void setSHAR(uint8_t * addr); //MAC
+void setSIPR(uint8_t * addr); //IP device
+void setMR(uint8_t val); //mode
+void setRTR(uint16_t timeout); // set retransmission time for data transmission, connection, closing ...
+void setRCR(uint8_t retry); // set retransmission retries (above the value, assert timeout interrupt)
 
 /*Getters*/
+uint8_t getRCR(void);
 uint8_t getPHYCFGR( void );
 uint8_t getIR( void );
 void getGAR(uint8_t * addr);
@@ -443,17 +469,5 @@ void getSUBR(uint8_t * addr);
 void getSHAR(uint8_t * addr);
 void getSIPR(uint8_t * addr);
 uint8_t getMR( void );
-
-/**
- @brief WIZCHIP_OFFSET_INC on IINCHIP_READ/WRITE
- * case1.
- *  IINCHIP_WRITE(RTR0,val);
- *  IINCHIP_WRITE(RTR1,val);
- * case1.
- *  IINCHIP_WRITE(RTR0,val);
- *  IINCHIP_WRITE(WIZCHIP_OFFSET_INC(RTR0,1));
- */
-//#define WIZCHIP_OFFSET_INC(ADDR, N)    (ADDR + (N<<8)) //< Increase offset address
-
 
 #endif /* INC_W5500_H_ */

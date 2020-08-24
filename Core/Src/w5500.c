@@ -18,14 +18,9 @@ void IINCHIP_WRITE( uint32_t addrbsb,  uint8_t data)
 	cmd[2] = ((addrbsb & 0x000000F8) + 4);// Data write command and Write data length 1
 	cmd[3] = data;                    // Data write (write 1byte data)
 
-	//__ASM volatile ("cpsid f" : : : "memory");
-
    cs_low();
    SPI1_Send_IT(cmd, sizeof(cmd));
    cs_high();
-
-   //__ASM volatile ("cpsie f" : : : "memory");
-
 }
 
 uint8_t IINCHIP_READ(uint32_t addrbsb)
@@ -36,15 +31,10 @@ uint8_t IINCHIP_READ(uint32_t addrbsb)
 	cmd[0] = ((addrbsb & 0x00FF0000)>>16);// Address byte 1
 	cmd[1] = ((addrbsb & 0x0000FF00)>> 8);// Address byte 2
 	cmd[2] = (addrbsb & 0x000000F8);	 	 // Data read command and Read data length 1
-	//cmd[3] = 0x00;
-	//__ASM volatile ("cpsid f" : : : "memory");
 	cs_low();
 	SPI1_Send_IT(cmd, sizeof(cmd));
 	SPI1_Receive_IT(&buf, sizeof(buf));
-
-	//SPI1_SendReceive_IT(cmd, buf,  sizeof(buf));
 	cs_high();
-   //__ASM volatile ("cpsie f" : : : "memory");
 
    return buf;
 }
@@ -60,12 +50,10 @@ uint16_t wiz_write_buf(uint32_t addrbsb,uint8_t* buf,uint16_t len)
    cmd[1] = ((addrbsb & 0x0000FF00)>> 8);// Address byte 2
    cmd[2] = ((addrbsb & 0x000000F8) + 4);    // Data write command and Write data length 1
 
-   //__ASM volatile ("cpsid f" : : : "memory");
    cs_low();
    SPI1_Send_IT(cmd,sizeof(cmd));
    SPI1_Send_IT(buf,len);
    cs_high();
-   //__ASM volatile ("cpsie f" : : : "memory");	// Interrupt TcpClient_Trace Routine Enable
 
    return len;
 }
@@ -80,19 +68,13 @@ uint16_t wiz_read_buf(uint32_t addrbsb, uint8_t* buf,uint16_t len)
   cmd[1] = ( (addrbsb & 0x0000FF00)>> 8);// Address byte 2
   cmd[2] = ( (addrbsb & 0x000000F8));    // Data write command and Write data length 1
 
-  //__ASM volatile ("cpsid f" : : : "memory");
   cs_low();
-
   SPI1_Send_IT(cmd,sizeof(cmd));
   SPI1_Receive_IT(buf, len);
-  //SPI1_SendReceive_IT(cmd,buf,sizeof(cmd)+len);
-
   cs_high();
-  //__ASM volatile ("cpsie f" : : : "memory");	   // Interrupt TcpClient_Trace Routine Enable
 
   return len;
 }
-
 
 /*##################################################### FUNCIONES GENERALES DEL CHIP##########################################################*/
 
@@ -115,59 +97,47 @@ void W5500_ResetSoftware(void){
 }
 
 
-
-/**********************************************
- * Shared Buffer Definition for LOOPBACK TEST *
- **********************************************/
-#define DATA_BUF_SIZE   2048
-uint8_t gDATABUF[DATA_BUF_SIZE];
-
-
-static int8_t checkPhyLink(void)
+/*0: Link off 1: Link on*/
+int8_t checkPhyLink(void)
 {
-   return(getPHYCFGR() & 1); //0: Link off 1: Link on
+   return(getPHYCFGR() & 1);
 }
 
-void W5500_Init(void)
+
+// Configuration Network Information of W5500
+W5500_Network w5500_Network = {.Mac = {0x00, 0x08, 0xdc,0x00, 0xab, 0xcd},
+                           	   .IpDevice = {192, 168, 1, 123},
+							   .Sub = {255,255,255,0},
+							   .Gw = {192, 168, 0, 1},
+							   .DNS_1 = {0,0,0,0},
+							   .DHCP = 1,
+							   .txsize = {4,4,4,4,4,4,4,4},
+							   .rxsize = {4,4,4,4,4,4,4,4}
+						  	  };
+
+
+void W5500_Init(W5500_Network * w5500_Network)
 {
 	uint8_t tmp_array[8]={0};
-    uint8_t i;
 
     T("W5500_Reset();");
 	W5500_Reset();
 	T("W5500_ResetSoftware();");
 	W5500_ResetSoftware();
 
-    /* PHY link status check */
 	while(!checkPhyLink());
 
-    // MAC ADDRESS
-    for (i = 0 ; i < 6; i++) Config_Msg.Mac[i] = MAC[i];
-    // Local IpDevice ADDRESS
-    for (i = 0 ; i < 4; i++) Config_Msg.IpDevice[i] = IpDevice[i];
-    // GateWay ADDRESS
-    for (i = 0 ; i < 4; i++) Config_Msg.Gw[i] = GateWay[i];
-    // Subnet Mask ADDRESS
-    for (i = 0 ; i < 4; i++) Config_Msg.Sub[i] = SubNet[i];
-
     //set mac
-    setSHAR(Config_Msg.Mac);
+    setSHAR(w5500_Network->Mac);
     //set subnet mask
-    setSUBR(Config_Msg.Sub);
+    setSUBR(w5500_Network->Sub);
     //set gateway
-    setGAR(Config_Msg.Gw);
+    setGAR(w5500_Network->Gw);
     //set ip
-    setSIPR(Config_Msg.IpDevice);
-
-    //set DHCP
-    Config_Msg.DHCP = Enable_DHCP;
-
-    //Destination Ip address for TCP Client
-    for (i = 0 ; i < 4; i++) Chconfig_Type_Def.destip[i] = IpServer[i];
-    Chconfig_Type_Def.port = PortServer;
+    setSIPR(w5500_Network->IpDevice);
 
     //set ping block mode
-    /*Falta implementar*/
+    /*Faltaria implementar*/
 
     //set retry time-value: retransmission timeout = 200 ms
     setRTR(2000);
@@ -175,7 +145,7 @@ void W5500_Init(void)
     setRCR(5);
 
     //Inicializa tamaño memoria Tx & Rx
-    sysinit(txsize, rxsize);
+    sysinit(w5500_Network->txsize, w5500_Network->rxsize);
 
     T("\r\n----------------------------------------- \r\n");
     T("W5500E01-M3                       \r\n");
@@ -185,7 +155,6 @@ void W5500_Init(void)
     getSHAR(tmp_array);
     T("\r\nMAC : %.2X.%.2X.%.2X.%.2X.%.2X.%.2X", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3],tmp_array[4],tmp_array[5]);
 
-    memset(tmp_array,0x00,sizeof(tmp_array));
     getSIPR (tmp_array);
     T("\r\nIP : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
 
@@ -197,6 +166,9 @@ void W5500_Init(void)
     T("\r\nGW : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
 }
 
+void W5500_Trace(void){
+
+}
 
 static uint8_t I_STATUS[MAX_SOCK_NUM]; //interrupt state?
 static uint16_t SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
@@ -206,7 +178,7 @@ uint8_t getISR(uint8_t s)
 {
   return I_STATUS[s];
 }
-void putISR(uint8_t s, uint8_t val)
+void setISR(uint8_t s, uint8_t val)
 {
    I_STATUS[s] = val;
 }
@@ -218,14 +190,6 @@ uint16_t getIINCHIP_RxMAX(uint8_t s)
 uint16_t getIINCHIP_TxMAX(uint8_t s)
 {
    return SSIZE[s];
-}
-
-/**
-@brief  This function is for resetting of the iinchip. Initializes the iinchip to work in whether DIRECT or INDIRECT mode
-*/
-void iinchip_init(void)
-{
-  setMR( MR_RST );
 }
 
 /**
@@ -262,8 +226,8 @@ void sysinit( uint8_t * tx_size, uint8_t * rx_size  )
 		IINCHIP_WRITE( (Sn_TXMEM_SIZE(i)), tx_size[i]);
 		IINCHIP_WRITE( (Sn_RXMEM_SIZE(i)), rx_size[i]);
 
-		T("tx_size[%d]: %d, Sn_TXMEM_SIZE = %d\r\n",i, tx_size[i], IINCHIP_READ(Sn_TXMEM_SIZE(i)));
-		T("rx_size[%d]: %d, Sn_RXMEM_SIZE = %d\r\n",i, rx_size[i], IINCHIP_READ(Sn_RXMEM_SIZE(i)));
+		//T("tx_size[%d]: %d, Sn_TXMEM_SIZE = %d\r\n",i, tx_size[i], IINCHIP_READ(Sn_TXMEM_SIZE(i)));
+		//T("rx_size[%d]: %d, Sn_RXMEM_SIZE = %d\r\n",i, rx_size[i], IINCHIP_READ(Sn_RXMEM_SIZE(i)));
 
 		SSIZE[i] = (int)(0);
 		RSIZE[i] = (int)(0);
@@ -335,82 +299,66 @@ void clearIR(uint8_t mask)
 
 /**************************************** SETTERS ******************************************/
 
-//set gateway addr
 void setGAR(uint8_t * addr ) /**< a pointer to a 4 -byte array responsible to set the Gateway IP address. */
 {
     wiz_write_buf(GAR0, addr, 4);
 }
 
-//set subnet mask
 void setSUBR(uint8_t * addr)
 {
     wiz_write_buf(SUBR0, addr, 4);
 }
 
-//set mac addr
 void setSHAR(uint8_t * addr)  /**< a pointer to a 6 -byte array responsible to set the MAC address. */
 {
   wiz_write_buf(SHAR0, addr, 6);
 }
 
-//set ip addr
 void setSIPR(uint8_t * addr)  /**< a pointer to a 4 -byte array responsible to set the Source IP address. */
 {
     wiz_write_buf(SIPR0, addr, 4);
 }
 
-//set mode
 void setMR(uint8_t val)
 {
   IINCHIP_WRITE(MR,val);
 }
-/**
-@brief  This function sets up Retransmission time.
-*/
+
 void setRTR(uint16_t timeout)
 {
   IINCHIP_WRITE(RTR0,(uint8_t)((timeout & 0xff00) >> 8));
   IINCHIP_WRITE(RTR1,(uint8_t)(timeout & 0x00ff));
 }
 
-/**
-@brief  This function set the number of Retransmission.
-*/
 void setRCR(uint8_t retry)
 {
   IINCHIP_WRITE(RCR,retry);
 }
 
-
-
 /************************************ GETTERS ***********************************/
-//get gateway addr
+uint8_t getRCR(void){
+	return IINCHIP_READ(RCR);
+}
 void getGAR(uint8_t * addr)
 {
     wiz_read_buf(GAR0, addr, 4);
 }
-//get subnet mask
 void getSUBR(uint8_t * addr)
 {
     wiz_read_buf(SUBR0, addr, 4);
 }
-//get mac addr
 void getSHAR(uint8_t * addr)
 {
     wiz_read_buf(SHAR0, addr, 6);
 }
-
-//get ip
 void getSIPR(uint8_t * addr)
 {
     wiz_read_buf(SIPR0, addr, 4);
 }
-//get mode
 uint8_t getMR( void )
 {
    return IINCHIP_READ(MR);
 }
-//gets Interrupt register in common register.
 uint8_t getIR( void )
 {
    return IINCHIP_READ(IR);
@@ -432,16 +380,15 @@ void setSn_MSS(SOCKET s, uint16_t Sn_MSSR)
 
 void setSn_TTL(SOCKET s, uint8_t ttl)
 {
-   IINCHIP_WRITE( Sn_TTL(s) , ttl);
+	IINCHIP_WRITE( Sn_TTL(s) , ttl);
 }
 void setSn_CR(SOCKET sn, uint8_t cr){
-		IINCHIP_WRITE(Sn_CR(sn), cr);
+	IINCHIP_WRITE(Sn_CR(sn), cr);
 }
 //dest ip
 void setSn_DIPR(SOCKET sn, uint8_t * dipr){
 	wiz_write_buf((uint32_t)Sn_DIPR(sn), dipr, 4);
 }
-//dest port
 void setSn_DPORT(SOCKET sn, uint16_t dport) {
 	IINCHIP_WRITE(Sn_DPORT(sn),   (uint8_t) (dport>>8));
 	IINCHIP_WRITE(WIZCHIP_OFFSET_INC(Sn_DPORT(sn),1), (uint8_t)  dport);
@@ -453,17 +400,21 @@ void setSn_RX_RD(SOCKET sn, uint8_t rxrd) {
 	IINCHIP_WRITE(Sn_RX_RD(sn),   (uint8_t)(rxrd>>8));
 	IINCHIP_WRITE(WIZCHIP_OFFSET_INC(Sn_RX_RD(sn),1), (uint8_t) rxrd);
 }
-//mode
 void setSn_MR(SOCKET sn, uint8_t mr){
 	IINCHIP_WRITE(Sn_MR(sn),mr);
 }
-//port
 void setSn_PORT(SOCKET sn, uint16_t port){
 	IINCHIP_WRITE( Sn_PORT0(sn) ,(uint8_t)((port & 0xff00) >> 8));
 	IINCHIP_WRITE( Sn_PORT1(sn) ,(uint8_t)(port & 0x00ff));
 }
 
-/*********** GETTERS******/
+/*************************** GETTERS************************************/
+uint16_t getSn_DPORT(SOCKET sn){
+	return (((uint16_t)IINCHIP_READ(Sn_DPORT(sn)) << 8) + (uint16_t)IINCHIP_READ(WIZCHIP_OFFSET_INC(Sn_DPORT(sn),1)));
+}
+void getSn_DIPR(SOCKET sn, uint8_t * dipr){
+	wiz_read_buf((uint32_t)Sn_DIPR(sn), dipr, 4);
+}
 uint8_t getSn_TXBUF_SIZE(SOCKET sn){
 	return IINCHIP_READ(Sn_TXBUF_SIZE(sn));
 }
@@ -475,25 +426,18 @@ uint8_t getSn_CR(SOCKET sn){
 	return IINCHIP_READ(Sn_CR(sn));
 }
 
-uint8_t getSn_RX_RD(SOCKET sn){
-	return (IINCHIP_READ((Sn_RX_RD(sn)) << 8) + IINCHIP_READ(WIZCHIP_OFFSET_INC(Sn_RX_RD(sn),1)));
+uint16_t getSn_RX_RD(SOCKET sn){
+	return (((uint16_t)IINCHIP_READ(Sn_RX_RD(sn)) << 8) + (uint16_t)IINCHIP_READ(WIZCHIP_OFFSET_INC(Sn_RX_RD(sn),1)));
 }
 uint8_t getSn_MR(SOCKET sn){
 	return IINCHIP_READ(Sn_MR(sn));
 }
-/*
-void getSn_TxMAX(sn){
-	(getSn_TXBUF_SIZE(sn) << 10);
-}
-*/
 
-//socket interrupt status
 uint8_t getSn_IR(SOCKET s)
 {
    return IINCHIP_READ(Sn_IR(s));
 }
 
-//socket status
 uint8_t getSn_SR(SOCKET s)
 {
    return IINCHIP_READ(Sn_SR(s));

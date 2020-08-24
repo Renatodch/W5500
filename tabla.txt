@@ -1,0 +1,8 @@
+id,nombre,valor
+1,n1,v1
+2,n2,v2
+3,n3,v3
+4,n4,v4
+5,n5,v5
+6,n6,v6
+7,n7,v7

@@ -12,8 +12,17 @@
 static uint16_t local_port;
 extern uint16_t sent_ptr;
 
+/*About Sockets*/
+uint16_t any_port = 1001;
+uint16_t io_mode = 0;
+uint16_t is_sending = 0;
+uint16_t remained_size[MAX_SOCK_NUM] = {0,0,};
+uint8_t  pack_info[MAX_SOCK_NUM] = {0,};
 
-
+/**
+@brief   This function used to receive the data in different mode
+@return  pack_len: tamaño recibido
+*/
 int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t *port)
 {
 	uint8_t  mr;
@@ -31,7 +40,7 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
 		 return SOCKERR_SOCKMODE;
 	}
 
-	T("Enter sock remained...");
+	//T("Enter sock remained...");
 	if(remained_size[sn] == 0)
 	{
 		while(1)
@@ -42,7 +51,6 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
 			if(pack_len != 0) break;
 		};
 	}
-
 
 	switch (mr & 0x07)
 	{
@@ -91,11 +99,13 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
 	}
 	else pack_info[sn] = PACK_COMPLETED;
 
-
    return (int32_t)pack_len;
 }
 
-
+/**
+@brief   This function used to send the data in TCP mode
+@return  len: tamaño a enviar
+*/
 int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t port)
 {
 	uint8_t tmp = 0;
@@ -117,8 +127,6 @@ int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t 
 	taddr = (taddr << 8) + ((uint32_t)addr[2] & 0x000000FF);
 	taddr = (taddr << 8) + ((uint32_t)addr[3] & 0x000000FF); //taddr = addr[0] addr[1] addr[2] addr[3]
 
-	//if((taddr == 0) && ((getSn_MR(sn)&Sn_MR_MACRAW) != Sn_MR_MACRAW)) return SOCKERR_IPINVALID;
-	//if((port  == 0) && ((getSn_MR(sn)&Sn_MR_MACRAW) != Sn_MR_MACRAW)) return SOCKERR_PORTZERO;
 	tmp = getSn_SR(sn);
 	if((tmp != SOCK_MACRAW) && (tmp != SOCK_UDP) && (tmp != SOCK_IPRAW)) return SOCKERR_SOCKSTATUS;
 
@@ -161,8 +169,6 @@ int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t 
 	return (int32_t)len;
 }
 
-
-
 void Socket_Trace(char* tag, uint8_t s)
 {
 	char str[32] = {0};
@@ -170,6 +176,7 @@ void Socket_Trace(char* tag, uint8_t s)
 	uint8_t val = getSn_SR(s);
 	T("%s socket: %s (%d)",tag,str,val);
 }
+
 char Socket_GetStatusToString(uint8_t socket, char *mt)
 {
 	uint8_t ret = 0;
@@ -243,7 +250,6 @@ char Socket_GetStatusToString(uint8_t socket, char *mt)
 	return ret;
 }
 
-
 /**
 @brief   This Socket function initialize the channel in perticular mode, and set the port and wait for W5200 done it.
 @return  1 for sucess else 0.
@@ -288,7 +294,6 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag)
 
 }
 
-
 /**
 @brief   This function close the socket and parameter is "s" which represent the socket number
 */
@@ -304,7 +309,6 @@ void close(SOCKET s)
         /* all clear */
    IINCHIP_WRITE( Sn_IR(s) , 0xFF);
 }
-
 
 /**
 @brief   This function established  the connection for the channel in passive (server) mode. This function waits for the request from the peer.
@@ -381,9 +385,6 @@ uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port)
    return ret;
 }
 
-
-
-
 /**
 @brief   This function used for disconnect the socket and parameter is "s" which represent the socket number
 @return  1 for success else 0.
@@ -396,7 +397,6 @@ void disconnect(SOCKET s)
    while( IINCHIP_READ(Sn_CR(s) ) );
    /* ------- */
 }
-
 
 /**
 @brief   This function used to send the data in TCP mode
@@ -452,9 +452,8 @@ uint16_t send(SOCKET s, const uint8_t* buf, uint16_t len, bool retry)
    return ret;
 }
 
-
 /**
-@brief   This function is an application I/F function which is used to receive the data in TCP mode.
+@brief   This function used to receive the data in TCP mode.
       It continues to wait for data as much as the application wants to receive.
 
 @return  received data size for success else -1.

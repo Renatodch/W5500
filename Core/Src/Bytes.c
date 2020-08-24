@@ -18,7 +18,7 @@ uint8_t * Uint16ToBytes(uint8_t * s, uint16_t i)
 }
 
 /*******************************************************************************
-* Function Name  : Bytes_To_Uint32
+* Function Name  : Bytes_To_Uint16
 * Description    : Swap the bytes (Two by two) in the buffer.
 * Input          : Pointer to buffer and the length.
 * Output         : None.
@@ -143,4 +143,12 @@ char UInt32_IsBetweenWindow(uint32_t newVal, uint32_t min, uint32_t max)
 }
 
 
+char NibbleToHex(uint8_t nibble)
+{
+  nibble &= 0x0F;
+  if (nibble <= 9)
+    return nibble + '0';
+  else
+    return nibble + ('A'-0x0A);
+}
 
