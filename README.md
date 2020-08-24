@@ -5,8 +5,14 @@
 ### src  
 W5500.c: Componente del dispositivo w5500   
 socket.c: Componente de los sockets   
-spi1.c: interface SPI1 + ISR  
-
+spi1.c: interface SPI1 + ISR
+TcpClientConn: Cliente TCP  
+TcpServerConn: Servidor TCP    
+DNS_Client: Cliente DNS UDP    
+DHCPC_Client: Cliente DHCP UDP  
+WebServer: Servidor Web FSM  
+Pagina: Paginas Web  
+  
 ### inc  
 /********Includes del CLib *****************/  
 #include "Timer.h"  
@@ -20,7 +26,7 @@ spi1.c: interface SPI1 + ISR
 #include "DHCP_Client.h"  
 #include "Bytes.h" // fue modificado, es Parte del CLib.  
 #include "Test.h"  
-
+  
 /********Includes de Referencia*************/  
 #include "eeprom.h"  
 #include "Pagina.h"  
@@ -79,10 +85,5 @@ Comentarios:
 -Funciones para servidor Web  
 -Funciones para conxion tcp client.    
 -Funciones para conexion tcp server.      
-
-
-## LA MAYORIA DE COMPONENTES, CLASES Y VARIABLES YA EXISTENTES FUERON ARREGLADOS DE ACUERDO A LOS EJEMPLOS Y REQUERIMIENTOS
-## CON EL FIN DE FACILITAR EL ENTENDIMIENTO DE COMO FUNCIONAN.   
-
 
 
