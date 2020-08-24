@@ -47,7 +47,7 @@ Pagina: Paginas Web
 5. Manejo de multiples socket. (OK)    
 6. Funcion para recibir un archivo .txt desde una PC-cliente. (OK)       
 
-## Descripción
+## Descripción de Componentes  
 
 ### DHCP_Client
 -Funciones para manejar el DHCP_Client.
@@ -81,9 +81,15 @@ Comentarios:
 ### spi1     
 -Funciones del spi1 + irq - Hal driver  
   
-### Test (Ejemplo)    
--Funciones para servidor Web  
--Funciones para conxion tcp client.    
--Funciones para conexion tcp server.      
+### TcpClientConn  
+-Funciones para conxion tcp client.  
 
+### TcpServerConn  
+-Funciones para conexion tcp server.  
+        
+### WebServer   
+-Funciones para servidor Web    
+    
+### Paginas
+- Paginas Web  
 
