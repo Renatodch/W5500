@@ -287,6 +287,11 @@ typedef uint8_t 			SOCKET;
 #define Sn_TXBUF_SIZE(ch)   			(0x001F08 + (ch<<5))
 
 /**
+ @brief Receive memory size reigster
+ */
+#define Sn_RXBUF_SIZE(ch)   			(0x001E00 + (ch<<5))
+
+/**
  @brief Source port register address
  */
 #define Sn_PORT(ch)         			(0x000408 + (ch<<5))
@@ -438,7 +443,8 @@ uint8_t getSn_MR(SOCKET sn); //mode
 uint16_t getSn_RX_RD(SOCKET sn); //rx pointer
 uint8_t getSn_TXBUF_SIZE(SOCKET sn);
 uint16_t getSn_TxMAX(SOCKET sn);//lo mismo que getIINCHIP_TxMAX
-
+uint8_t getSn_RXBUF_SIZE(SOCKET sn);
+uint16_t getSn_RxMAX(SOCKET sn);//lo mismo que getIINCHIP_RxMAX
 /*######################### FUNCIONES GENERALES DEL CHIP#####################################################*/
 void sysinit(uint8_t * tx_size, uint8_t * rx_size); // setting tx/rx buf size
 void W5500_Init(W5500_Network * w5500_Network); //Inicia características de la red

@@ -32,6 +32,8 @@
 
 #define SOCKFATAL_PACKLEN     (SOCK_FATAL - 1)     ///< Invalid packet length. Fatal Error.
 
+#define SF_IO_NONBLOCK           0x01              ///< Socket nonblock io mode. It used parameter in \ref socket().
+
 /*
  * UDP & MACRAW Packet Infomation
  */
@@ -51,10 +53,13 @@ extern uint8_t  pack_info[MAX_SOCK_NUM];
 uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag); // Inicializa y abre un socket en modo TCP o UDP
 void close(SOCKET s); // Cierra el socket
 uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port); // Establece conexion TCP Activa
-void disconnect(SOCKET s); // Desconecta
+//void disconnect(SOCKET s);
+int8_t disconnect(SOCKET s); // Desconecta
 uint8_t listen(SOCKET s);	// Establece conexion TCP Pasiva
-uint16_t send(SOCKET s, const uint8_t * buf, uint16_t len, bool retry); // Envia datos en modo TCP
+//uint16_t send(SOCKET s, const uint8_t * buf, uint16_t len, bool retry); // Envia datos en modo TCP
+int32_t send(uint8_t sn, uint8_t * buf, uint16_t len,bool retry);
 uint16_t recv(SOCKET s, uint8_t * buf, uint16_t len);	// Recibe datos en modo TCP
+//int32_t recv(uint8_t sn, uint8_t * buf, uint16_t len);
 int32_t sendto(SOCKET sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t port);// Envia datos en modo UDP
 int32_t recvfrom(SOCKET s, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t  *port); // Recibe datos en modo UDP
 char Socket_GetStatusToString(uint8_t socket, char *mt); //Obtiene el estado del socket en un mensaje

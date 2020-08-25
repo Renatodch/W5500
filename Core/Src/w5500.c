@@ -422,6 +422,13 @@ uint16_t getSn_TxMAX(SOCKET sn){
 	return (getSn_TXBUF_SIZE(sn) <<10);
 }
 
+uint8_t getSn_RXBUF_SIZE(SOCKET sn){
+	return IINCHIP_READ(Sn_RXBUF_SIZE(sn));
+}
+uint16_t getSn_RxMAX(SOCKET sn){
+	return (getSn_RXBUF_SIZE(sn) <<10);
+}
+
 uint8_t getSn_CR(SOCKET sn){
 	return IINCHIP_READ(Sn_CR(sn));
 }

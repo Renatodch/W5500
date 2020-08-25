@@ -21,7 +21,7 @@ uint8_t TcpClientConn_SendStream(TcpClient *p, uint8_t * data_buf, 	uint16_t len
 
 	if (getSn_SR(p->socket) == SOCK_ESTABLISHED)
 	{
-		send(p->socket, (uint8_t*) buf, len + 4, (bool)0);
+		send(p->socket, buf, len + 4, (bool)0);
 		return 1;
 	}
 

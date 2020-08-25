@@ -487,9 +487,7 @@ int8_t parseDHCPMSG(DhcpConnection * dhcpc)
    				dhcpc->leaseTime  = (dhcpc->leaseTime << 8) + *p++;
    				dhcpc->leaseTime  = (dhcpc->leaseTime << 8) + *p++;
    				dhcpc->leaseTime  = (dhcpc->leaseTime << 8) + *p++;
-            #ifdef _DHCP_DEBUG_
-   				dhcpc->leaseTime = 10;
- 				#endif
+
    				break;
    			case dhcpServerIdentifier :
    				p++;
@@ -576,7 +574,7 @@ uint8_t DHCP_run(DhcpConnection * dhcpc)
 
 		case STATE_DHCP_LEASED :
 		   ret = DHCP_IP_LEASED;
-			if ((dhcp_lease_time != INFINITE_LEASETIME) && ((dhcp_lease_time/2) < dhcp_tick_1s)) {
+			if ((dhcpc->leaseTime != INFINITE_LEASETIME) && ((dhcpc->leaseTime/2) < dhcp_tick_1s)) {
 
  				T("> Maintains the IP address \r\n");
 				type = 0;
@@ -668,7 +666,7 @@ uint8_t check_DHCP_timeout(DhcpConnection * dhcpc)
 
 			dhcp_tick_1s = 0;
 			dhcp_tick_next = dhcp_tick_1s + DHCP_WAIT_TIME;
-			dhcp_retry_count++;
+			dhcpc->retry++;
 		}
 	} else { // timeout occurred
 
@@ -730,8 +728,9 @@ void reset_DHCP_timeout(void)
 {
 	dhcp_tick_1s = 0;
 	dhcp_tick_next = DHCP_WAIT_TIME;
-	dhcp_retry_count = 0;
+	dhcpc.retry = 0;
 }
+
 
 void DHCP_time_handler(void)
 {
@@ -770,12 +769,6 @@ void getDNSfromDHCP(uint8_t* ip)
    ip[3] = dhcpc.allocatedDns[3];
 }
 
-uint32_t getDHCPLeasetime(void)
-{
-	return dhcp_lease_time;
-}
-
-
 /* The default handler of ip assign first */
 void ip_assign_callback(void){
 	uint8_t tmp_array[6] = {0};
@@ -808,7 +801,7 @@ void ip_assign_callback(void){
    getGAR(tmp_array);
    T("\r\nGW : %d.%d.%d.%d", tmp_array[0],tmp_array[1],tmp_array[2],tmp_array[3]);
 
-   T("DHCP LEASED TIME : %ld Sec.\r\n", getDHCPLeasetime());
+   T("DHCP LEASED TIME : %ld Sec.\r\n", dhcpc.leaseTime);
 }
 void ip_update_callback(void)
 {

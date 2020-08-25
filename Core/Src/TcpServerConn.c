@@ -90,7 +90,7 @@ void ServerConn_SendLine(ServerConnection *p, const char * str)
 {
 	if (getSn_SR(p->socket) == SOCK_ESTABLISHED)
 	{
-		send(p->socket, (const uint8_t*) str, strlen(str), (bool)0);
+		send(p->socket, (uint8_t*) str, strlen(str), (bool)0);
 	}
 }
 

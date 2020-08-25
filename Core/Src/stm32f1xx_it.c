@@ -184,10 +184,17 @@ void PendSV_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
+void DHCP_time_handler(void);
+uint32_t OneSecond = 0;
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
   st++;
+  OneSecond++;
+  if(OneSecond==1000){
+	  OneSecond = 0;
+	  DHCP_time_handler();
+  }
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */

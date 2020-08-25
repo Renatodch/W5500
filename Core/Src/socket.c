@@ -280,10 +280,10 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag)
       setSn_CR(s, Sn_CR_OPEN);
 	  while(getSn_CR(s));
 
-	  io_mode =0;
+	  io_mode |= ((flag & SF_IO_NONBLOCK) << s);  ;
 	  is_sending &= ~(1<<s);
 	  remained_size[s] = 0;
-	  pack_info[s] = 0;
+	  pack_info[s] = PACK_COMPLETED;
       ret = 1;
    }
    else
@@ -299,15 +299,18 @@ uint8_t socket(SOCKET s, uint8_t protocol, uint16_t port, uint8_t flag)
 */
 void close(SOCKET s)
 {
-
-   IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_CLOSE);
-
-   /* wait to process the command... */
-   while( IINCHIP_READ(Sn_CR(s) ) )
-      ;
-   /* ------- */
-        /* all clear */
-   IINCHIP_WRITE( Sn_IR(s) , 0xFF);
+	setSn_CR( s ,Sn_CR_CLOSE);
+	/* wait to process the command... */
+	while( getSn_CR(s ) );
+	/* clear all interrupt of the socket. */
+	setSn_IR(s, 0xFF);
+	/* all clear */
+	io_mode &= ~(1<<s);
+	//
+	is_sending &= ~(1<<s);
+	remained_size[s] = 0;
+	pack_info[s] = 0;
+	while(getSn_SR(s) != SOCK_CLOSED);
 }
 
 /**
@@ -389,19 +392,81 @@ uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port)
 @brief   This function used for disconnect the socket and parameter is "s" which represent the socket number
 @return  1 for success else 0.
 */
-void disconnect(SOCKET s)
+int8_t disconnect(SOCKET s)
 {
-   IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_DISCON);
+/*
+   setSn_CR(s,Sn_CR_DISCON);
+   while( getSn_CR(s) );
+*/
+	setSn_CR(s,Sn_CR_DISCON);
+	/* wait to process the command... */
+	while(getSn_CR(s));
+	is_sending &= ~(1<<s);
+	if(io_mode & (1<<s)) return SOCK_BUSY;
+	while(getSn_SR(s) != SOCK_CLOSED)
+	{
+	   if(getSn_IR(s) & Sn_IR_TIMEOUT)
+	   {
+		  close(s);
+		  return SOCKERR_TIMEOUT;
+	   }
+	}
+	return SOCK_OK;
 
-   /* wait to process the command... */
-   while( IINCHIP_READ(Sn_CR(s) ) );
-   /* ------- */
 }
 
 /**
 @brief   This function used to send the data in TCP mode
 @return  1 for success else 0.
 */
+int32_t send(uint8_t sn, uint8_t * buf, uint16_t len, bool retry)
+{
+   uint8_t tmp=0;
+   uint16_t freesize=0;
+
+   tmp = getSn_SR(sn);
+   if(tmp != SOCK_ESTABLISHED && tmp != SOCK_CLOSE_WAIT) return SOCKERR_SOCKSTATUS;
+   if( is_sending & (1<<sn) )
+   {
+      tmp = getSn_IR(sn);
+      if(tmp & Sn_IR_SEND_OK)
+      {
+         setSn_IR(sn, Sn_IR_SEND_OK);
+
+         is_sending &= ~(1<<sn);
+      }
+      else if(tmp & Sn_IR_TIMEOUT)
+      {
+         close(sn);
+         return SOCKERR_TIMEOUT;
+      }
+      else return SOCK_BUSY;
+   }
+   freesize = getSn_TxMAX(sn);
+   if (len > freesize) len = freesize; // check size not to exceed MAX size.
+   while(1)
+   {
+      freesize = getSn_TX_FSR(sn);
+      tmp = getSn_SR(sn);
+      if ((tmp != SOCK_ESTABLISHED) && (tmp != SOCK_CLOSE_WAIT))
+      {
+         close(sn);
+         return SOCKERR_SOCKSTATUS;
+      }
+      if( (io_mode & (1<<sn)) && (len > freesize) ) return SOCK_BUSY;
+      if(len <= freesize) break;
+   }
+   send_data_processing(sn, buf, len);
+
+   setSn_CR(sn,Sn_CR_SEND);
+   /* wait to process the command... */
+   while(getSn_CR(sn));
+   is_sending |= (1 << sn);
+   //M20150409 : Explicit Type Casting
+   //return len;
+   return (int32_t)len;
+}
+/*
 uint16_t send(SOCKET s, const uint8_t* buf, uint16_t len, bool retry)
 {
   uint8_t status=0;
@@ -428,7 +493,7 @@ uint16_t send(SOCKET s, const uint8_t* buf, uint16_t len, bool retry)
   send_data_processing(s, (uint8_t *)buf, ret);
   IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_SEND);
 
-  /* wait to process the command... */
+
   while( IINCHIP_READ(Sn_CR(s) ) );
 
   while ( (IINCHIP_READ(Sn_IR(s) ) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
@@ -451,6 +516,7 @@ uint16_t send(SOCKET s, const uint8_t* buf, uint16_t len, bool retry)
 
    return ret;
 }
+*/
 
 /**
 @brief   This function used to receive the data in TCP mode.
@@ -458,20 +524,62 @@ uint16_t send(SOCKET s, const uint8_t* buf, uint16_t len, bool retry)
 
 @return  received data size for success else -1.
 */
+
 uint16_t recv(SOCKET s, uint8_t * buf, uint16_t len)
 {
    uint16_t ret=0;
    if ( len > 0 )
    {
       recv_data_processing(s, buf, len);
-      IINCHIP_WRITE( Sn_CR(s) ,Sn_CR_RECV);
-      /* wait to process the command... */
-      while( IINCHIP_READ(Sn_CR(s) ));
-      /* ------- */
+      setSn_CR(s ,Sn_CR_RECV);
+      while( getSn_CR(s));
+
       ret = len;
    }
    return ret;
 }
 
 
+/*
+int32_t recv(uint8_t sn, uint8_t * buf, uint16_t len)
+{
+	uint8_t  tmp = 0;
+	uint16_t recvsize = 0;
+
+	recvsize = getSn_RxMAX(sn);
+	if(recvsize < len) len = recvsize;
+
+	while(1)
+	{
+	 recvsize = getSn_RX_RSR(sn);
+	 tmp = getSn_SR(sn);
+	 if (tmp != SOCK_ESTABLISHED)
+	 {
+		if(tmp == SOCK_CLOSE_WAIT)
+		{
+		   if(recvsize != 0) break;
+		   else if(getSn_TX_FSR(sn) == getSn_TxMAX(sn))
+		   {
+			  close(sn);
+			  return SOCKERR_SOCKSTATUS;
+		   }
+		}
+		else
+		{
+		   close(sn);
+		   return SOCKERR_SOCKSTATUS;
+		}
+	 }
+	 if((io_mode & (1<<sn)) && (recvsize == 0)) return SOCK_BUSY;
+	 if(recvsize != 0) break;
+	};
+
+	if(recvsize < len) len = recvsize;
+	recv_data_processing(sn, buf, len);
+	setSn_CR(sn,Sn_CR_RECV);
+	while(getSn_CR(sn));
+
+	return (int32_t)len;
+}
+*/
 

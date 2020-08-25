@@ -150,7 +150,9 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-  for(int i; i<5 ; i++){
+  HAL_GPIO_WritePin(GPIOB, Buzzer_Pin, GPIO_PIN_SET); //Apagar buzzer ?
+
+  for(int i = 0; i<5 ; i++){
 	  HAL_GPIO_TogglePin(LED_CPU_GPIO_Port, LED_CPU_Pin);
 	  HAL_Delay(100);
   }
@@ -159,7 +161,6 @@ int main(void)
 
   Timer_Init(&Led, 3000);
   Timer_Start(&Led);
-  HAL_GPIO_WritePin(GPIOB, Buzzer_Pin, GPIO_PIN_SET); //Apagar buzzer ?
 
   /*1. Inicia W5500 y caracteristicas de la red*/
   W5500_Init(&w5500_Network);
