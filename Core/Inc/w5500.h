@@ -289,7 +289,7 @@ typedef uint8_t 			SOCKET;
 /**
  @brief Receive memory size reigster
  */
-#define Sn_RXBUF_SIZE(ch)   			(0x001E00 + (ch<<5))
+#define Sn_RXBUF_SIZE(ch)   			(0x001E08 + (ch<<5))
 
 /**
  @brief Source port register address

@@ -21,7 +21,7 @@ uint8_t TcpClientConn_SendStream(TcpClient *p, uint8_t * data_buf, 	uint16_t len
 
 	if (getSn_SR(p->socket) == SOCK_ESTABLISHED)
 	{
-		send(p->socket, buf, len + 4, (bool)0);
+		while(send(p->socket, buf, len + 4)<=0);
 		return 1;
 	}
 
@@ -80,7 +80,9 @@ void TcpClientConn_Events(TcpClient *p, uint16_t port)
 				 if (RSR_len > TX_RX_MAX_BUF_SIZE) RSR_len = TX_RX_MAX_BUF_SIZE;   /* if Rx data size is lager than TX_RX_MAX_BUF_SIZE */
 
 				 memset(TX_BUF,0x00,sizeof(TX_BUF));															/* the data size to read is MAX_BUF_SIZE. */
-				 received_len = recv(p->socket, data_buf, RSR_len);         /* read the received data */
+
+				 while((received_len = recv(p->socket, data_buf, RSR_len))<=0);         /* read the received data */
+
 				 p->receiver_EventHandler(data_buf, received_len);         	/* sent the received data */
 
 			}
@@ -93,7 +95,7 @@ void TcpClientConn_Events(TcpClient *p, uint16_t port)
 			{
 				 if (RSR_len > TX_RX_MAX_BUF_SIZE) RSR_len = TX_RX_MAX_BUF_SIZE;   /* if Rx data size is lager than TX_RX_MAX_BUF_SIZE */
 																																										/* the data size to read is MAX_BUF_SIZE. */
-				 recv(p->socket, data_buf, RSR_len);         /* read the received data */
+				 while(recv(p->socket, data_buf, RSR_len)<=0);         /* read the received data */
 			}
 			disconnect(p->socket);
 			ch_status[p->socket] = 0;
@@ -109,8 +111,8 @@ void TcpClientConn_Events(TcpClient *p, uint16_t port)
 			{
 				 T("\a%d : Fail to create socket.",p->socket);
 				 ch_status[p->socket] = 0;
-			}else
-				T("socket %d ready!",p->socket);
+			}
+
 		break;
 
 		case SOCK_INIT:     /* if a socket is initiated */

@@ -41,7 +41,7 @@ void ServerConn_Events(ServerConnection *p)
 				if (RSR_len > TX_RX_MAX_BUF_SIZE)
 							RSR_len = TX_RX_MAX_BUF_SIZE;   	/* if Rx data size is lager than TX_RX_MAX_BUF_SIZE */
 																	/* the data size to read is MAX_BUF_SIZE. */
-				received_len = recv(p->socket, data_buf, RSR_len);         				/* read the received data */
+				while((received_len = recv(p->socket, data_buf, RSR_len))<=0);         				/* read the received data */
 
 
 				p->listen_EventHandler((char*)data_buf, received_len);         										/* sent the received data */
@@ -56,7 +56,7 @@ void ServerConn_Events(ServerConnection *p)
 			if ((RSR_len = getSn_RX_RSR(p->socket)) > 0)     /* check Rx data */
 			{
 				if (RSR_len > TX_RX_MAX_BUF_SIZE) RSR_len = TX_RX_MAX_BUF_SIZE;  /* if Rx data size is lager than TX_RX_MAX_BUF_SIZE */																													/* the data size to read is MAX_BUF_SIZE. */
-				recv(p->socket, data_buf, RSR_len);     /* read the received data */
+				while(recv(p->socket, data_buf, RSR_len)<=0);     /* read the received data */
 			}
 			disconnect(p->socket);
 			ch_status[p->socket] = 0;
@@ -70,11 +70,10 @@ void ServerConn_Events(ServerConnection *p)
 			}
 			if(!socket(p->socket,(Sn_MR_ND|Sn_MR_TCP), p->port,0x00))    /* reinitialize the socket */
 			{
-				T("%d : Fail to create socket.",p->socket);
+				T("%d : Fail to init socket.",p->socket);
 				ch_status[p->socket] = 0;
 			}
-			else
-				T("socket %d ready!",p->socket);
+
 			break;
 
 		case SOCK_INIT:   /* if a socket is initiated */
@@ -90,7 +89,7 @@ void ServerConn_SendLine(ServerConnection *p, const char * str)
 {
 	if (getSn_SR(p->socket) == SOCK_ESTABLISHED)
 	{
-		send(p->socket, (uint8_t*) str, strlen(str), (bool)0);
+		while(send(p->socket, (uint8_t*) str, strlen(str))<=0);
 	}
 }
 

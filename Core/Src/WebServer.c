@@ -226,13 +226,6 @@ static void WebServer_MethodGETEventHandler(char * request)
 		return;
 	}
 
-	if( String_Compare( uri, "servicio" ) )
-	{
-		T("web.uri servicio");
-		Pages_Servicio();
-		return;
-	}
-
 	if( String_Compare( uri, "tabla" ) )
 	{
 		//Pages_Servicio3();

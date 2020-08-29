@@ -18,6 +18,9 @@
 *******************************************************************************/
 void Pages_Messages(char *msg,char *msg1)
 {
+	if(String_Is_Empty(msg)) return;
+	if(String_Is_Empty(msg1)) return;
+
 	ServerConn_SendLine(&websc, "HTTP/1.1 200 OK\r\n");
 	ServerConn_SendLine(&websc, "Content-Type: text/html\r\n");
 	ServerConn_SendLine(&websc, "\r\n");
@@ -188,7 +191,7 @@ void Pages_Error_Clave(void)
 		ServerConn_SendLine(&websc, "</tr>");
 		ServerConn_SendLine(&websc, "<tr>");
 
-		ServerConn_SendLine(&websc, reg);
+		//ServerConn_SendLine(&websc, reg);
 		//ServerConn_SendLine(&websc, "<td bgcolor='#336699' align='center' class='l'><font size='1'> TECAVI - 2015</font></td>");
 		ServerConn_SendLine(&websc, "</tr></table></td></tr></table>");
 
@@ -247,9 +250,6 @@ void Pages_Error_Clave(void)
 
 void Pages_Claves(void)
 {
-	char reg[256];
-
-	memset(reg, 0, sizeof(reg));
 
 	ServerConn_SendLine(&websc, "HTTP/1.1 200 OK\r\n");
 	ServerConn_SendLine(&websc, "Content-Type: text/html\r\n");
@@ -257,7 +257,6 @@ void Pages_Claves(void)
 	ServerConn_SendLine(&websc, "<!DOCTYPE html>");
 	ServerConn_SendLine(&websc, "<html>");
 
-	//Inicio de Prueba BOF
 	ServerConn_SendLine(&websc, "<body>");
 
 	ServerConn_SendLine(&websc, "<form action='clave' method='post' >");
@@ -267,7 +266,7 @@ void Pages_Claves(void)
 	ServerConn_SendLine(&websc, "<td height='68' valign='middle' bgcolor='#F3C47C' class='l' align='center'>");
 	ServerConn_SendLine(&websc, "<strong><font color='#0354A4' size='5'><b>Interface ROTEM</b></font></br></br></strong>");
 	//sprintf(reg,"<strong><font color='#336699' size='3'><b>Granja: %s   ---   Galp&#243n: %d</b> </font></strong>",Granjas[(app.granja_Id)],plc.galponNumero);
-	ServerConn_SendLine(&websc, reg);
+	//ServerConn_SendLine(&websc, reg);
 //ServerConn_SendLine(&websc, "<strong><font color='#336699' size='3'><b>Granja: %X</b></font></strong>");
 	ServerConn_SendLine(&websc, "</td>");
 	ServerConn_SendLine(&websc, "</tr>");
@@ -293,7 +292,7 @@ void Pages_Claves(void)
 	ServerConn_SendLine(&websc, "<tr>");
 
 	//sprintf(reg, "<td bgcolor='#336699' align='center' class='l'><font color='#FBFCFC' size='3'>Serie: %s   --   Ver: %s  --   Compilaci&#243n: %s</font></td>", app.serie, get_version(), get_build_date_time()  );  //03.04
-	ServerConn_SendLine(&websc, reg);
+	//ServerConn_SendLine(&websc, reg);
 	//ServerConn_SendLine(&websc, "<td bgcolor='#336699' align='center' class='l'><font size='1'> TECAVI - 2015</font></td>");
 	ServerConn_SendLine(&websc, "</tr></table></td></tr></table>");
 
