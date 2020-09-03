@@ -85,12 +85,12 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+void T(char * format,...);
 
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void T(char * format,...);
 
 /* USER CODE BEGIN EFP */
 #define TX_RX_MAX_BUF_SIZE	4096//2048

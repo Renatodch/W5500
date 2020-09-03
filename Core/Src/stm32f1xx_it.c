@@ -53,7 +53,8 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void DHCP_time_handler(void);
+uint32_t OneSecond = 0;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -184,8 +185,6 @@ void PendSV_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
-void DHCP_time_handler(void);
-uint32_t OneSecond = 0;
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
